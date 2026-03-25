@@ -1,0 +1,49 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Artist } from './entities/artist.entity';
+import { Album } from './entities/album.entity';
+import { Track } from './entities/track.entity';
+import { Concert } from './entities/concert.entity';
+import { Audiobook } from './entities/audiobook.entity';
+import { AudiobookChapter } from './entities/audiobook-chapter.entity';
+import { Playlist } from './entities/playlist.entity';
+import { PlaylistTrack } from './entities/playlist-track.entity';
+import { Like } from './entities/like.entity';
+import { PlayEvent } from './entities/play-event.entity';
+import { AudiobookProgress } from './entities/audiobook-progress.entity';
+import { ScannerState } from './entities/scanner-state.entity';
+
+const entities = [
+  Artist,
+  Album,
+  Track,
+  Concert,
+  Audiobook,
+  AudiobookChapter,
+  Playlist,
+  PlaylistTrack,
+  Like,
+  PlayEvent,
+  AudiobookProgress,
+  ScannerState,
+];
+
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        url: config.getOrThrow<string>('databaseUrl'),
+        entities,
+        synchronize: false,
+        logging: config.get('nodeEnv') === 'development',
+      }),
+    }),
+    TypeOrmModule.forFeature(entities),
+  ],
+  exports: [TypeOrmModule],
+})
+export class DatabaseModule {}
