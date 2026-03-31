@@ -1,0 +1,14 @@
+.spin {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: var(--radius-full);
+  animation: aubi-spin 0.7s linear infinite;
+}
+
+@keyframes aubi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

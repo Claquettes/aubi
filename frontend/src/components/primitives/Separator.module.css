@@ -1,0 +1,10 @@
+.sep {
+  height: 1px;
+  background: var(--color-border);
+  border: none;
+  margin: 0;
+}
+
+.subtle {
+  opacity: 0.5;
+}
