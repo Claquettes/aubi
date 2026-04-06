@@ -1,0 +1,100 @@
+name: aubi
+
+networks:
+  homelab_proxy:
+    external: true
+  aubi_internal:
+    internal: true
+
+services:
+  aubi-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aubi_frontend
+    restart: unless-stopped
+    networks:
+      - homelab_proxy
+    depends_on:
+      aubi-backend:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.aubi.rule=Host(`aubi.${DOMAIN}`)
+      - traefik.http.routers.aubi.entrypoints=websecure
+      - traefik.http.routers.aubi.tls.certresolver=letsencrypt
+      - traefik.http.services.aubi.loadbalancer.server.port=80
+      - traefik.http.routers.aubi.middlewares=authelia@docker,security-headers@file
+      - homepage.group=Media
+      - homepage.name=aubi
+      - homepage.icon=headphones.png
+      - homepage.href=https://aubi.${DOMAIN}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  aubi-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aubi_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://aubi:${AUBI_DB_PASSWORD}@aubi-db:5432/aubi
+      MUSIC_PATH: /music
+      PORT: "3000"
+      COVERS_PATH: /app/covers
+    volumes:
+      - ${MUSIC_PATH}:/music:ro
+      - aubi_covers:/app/covers
+    networks:
+      - homelab_proxy
+      - aubi_internal
+    depends_on:
+      aubi-db:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.aubi-api.rule=Host(`aubi.${DOMAIN}`) && PathPrefix(`/api`)
+      - traefik.http.routers.aubi-api.entrypoints=websecure
+      - traefik.http.routers.aubi-api.tls.certresolver=letsencrypt
+      - traefik.http.services.aubi-api.loadbalancer.server.port=3000
+      - traefik.http.routers.aubi-api.middlewares=authelia@docker,security-headers@file
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  aubi-db:
+    image: postgres:16-alpine
+    container_name: aubi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aubi
+      POSTGRES_PASSWORD: ${AUBI_DB_PASSWORD}
+      POSTGRES_DB: aubi
+    volumes:
+      - aubi_db:/var/lib/postgresql/data
+    networks:
+      - aubi_internal
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aubi -d aubi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  aubi_db:
+    name: aubi_db
+  aubi_covers:
+    name: aubi_covers
