@@ -7,6 +7,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Like } from '../../database/entities/like.entity';
 import { Track } from '../../database/entities/track.entity';
+import { Album } from '../../database/entities/album.entity';
+import { Artist } from '../../database/entities/artist.entity';
+import { AlbumLike } from '../../database/entities/album-like.entity';
+import { ArtistLike } from '../../database/entities/artist-like.entity';
 import { buildMeta, PaginationDto } from '../../common/dto/pagination.dto';
 import { TracksService } from '../tracks/tracks.service';
 
@@ -17,6 +21,14 @@ export class LikesService {
     private readonly likeRepo: Repository<Like>,
     @InjectRepository(Track)
     private readonly trackRepo: Repository<Track>,
+    @InjectRepository(AlbumLike)
+    private readonly albumLikeRepo: Repository<AlbumLike>,
+    @InjectRepository(ArtistLike)
+    private readonly artistLikeRepo: Repository<ArtistLike>,
+    @InjectRepository(Album)
+    private readonly albumRepo: Repository<Album>,
+    @InjectRepository(Artist)
+    private readonly artistRepo: Repository<Artist>,
     private readonly tracksService: TracksService,
   ) {}
 
@@ -93,5 +105,35 @@ export class LikesService {
     const r = await this.likeRepo.findOne({ where: { trackId } });
     if (!r) throw new NotFoundException('Not liked');
     await this.likeRepo.remove(r);
+  }
+
+  async likeAlbum(albumId: string) {
+    const a = await this.albumRepo.findOne({ where: { id: albumId } });
+    if (!a) throw new NotFoundException('Album not found');
+    const existing = await this.albumLikeRepo.findOne({ where: { albumId } });
+    if (existing) throw new ConflictException('Already liked');
+    await this.albumLikeRepo.save(this.albumLikeRepo.create({ albumId }));
+    return { albumId };
+  }
+
+  async unlikeAlbum(albumId: string) {
+    const r = await this.albumLikeRepo.findOne({ where: { albumId } });
+    if (!r) throw new NotFoundException('Not liked');
+    await this.albumLikeRepo.remove(r);
+  }
+
+  async likeArtist(artistId: string) {
+    const a = await this.artistRepo.findOne({ where: { id: artistId } });
+    if (!a) throw new NotFoundException('Artist not found');
+    const existing = await this.artistLikeRepo.findOne({ where: { artistId } });
+    if (existing) throw new ConflictException('Already liked');
+    await this.artistLikeRepo.save(this.artistLikeRepo.create({ artistId }));
+    return { artistId };
+  }
+
+  async unlikeArtist(artistId: string) {
+    const r = await this.artistLikeRepo.findOne({ where: { artistId } });
+    if (!r) throw new NotFoundException('Not liked');
+    await this.artistLikeRepo.remove(r);
   }
 }

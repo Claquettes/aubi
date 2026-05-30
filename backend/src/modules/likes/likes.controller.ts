@@ -20,6 +20,33 @@ export class LikesController {
     return this.likes.findAll(query);
   }
 
+  // --- Albums (routes spécifiques déclarées avant :trackId) ---
+  @Post('albums/:id')
+  @HttpCode(201)
+  likeAlbum(@Param('id', ParseUUIDPipe) id: string) {
+    return this.likes.likeAlbum(id);
+  }
+
+  @Delete('albums/:id')
+  @HttpCode(204)
+  async unlikeAlbum(@Param('id', ParseUUIDPipe) id: string) {
+    await this.likes.unlikeAlbum(id);
+  }
+
+  // --- Artistes ---
+  @Post('artists/:id')
+  @HttpCode(201)
+  likeArtist(@Param('id', ParseUUIDPipe) id: string) {
+    return this.likes.likeArtist(id);
+  }
+
+  @Delete('artists/:id')
+  @HttpCode(204)
+  async unlikeArtist(@Param('id', ParseUUIDPipe) id: string) {
+    await this.likes.unlikeArtist(id);
+  }
+
+  // --- Titres ---
   @Post(':trackId')
   @HttpCode(201)
   like(@Param('trackId', ParseUUIDPipe) trackId: string) {

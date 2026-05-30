@@ -10,6 +10,9 @@ import { AudiobookChapter } from './entities/audiobook-chapter.entity';
 import { Playlist } from './entities/playlist.entity';
 import { PlaylistTrack } from './entities/playlist-track.entity';
 import { Like } from './entities/like.entity';
+import { AlbumLike } from './entities/album-like.entity';
+import { ArtistLike } from './entities/artist-like.entity';
+import { TrackArtist } from './entities/track-artist.entity';
 import { PlayEvent } from './entities/play-event.entity';
 import { AudiobookProgress } from './entities/audiobook-progress.entity';
 import { ScannerState } from './entities/scanner-state.entity';
@@ -24,6 +27,9 @@ const entities = [
   Playlist,
   PlaylistTrack,
   Like,
+  AlbumLike,
+  ArtistLike,
+  TrackArtist,
   PlayEvent,
   AudiobookProgress,
   ScannerState,
