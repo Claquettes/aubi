@@ -30,6 +30,10 @@ export class TracksQueryDto extends PaginationDto {
   search?: string;
 
   @IsOptional()
+  @IsString()
+  folder?: string;
+
+  @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isLiked?: boolean;

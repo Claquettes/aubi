@@ -56,6 +56,15 @@ export class AlbumsService {
     return map;
   }
 
+  private async likedAlbumIds(ids: string[]): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+    const rows = await this.dataSource.query<{ album_id: string }[]>(
+      `SELECT album_id FROM album_likes WHERE album_id = ANY($1)`,
+      [ids],
+    );
+    return new Set(rows.map((r) => r.album_id));
+  }
+
   async findAll(query: AlbumsQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 50;
@@ -68,12 +77,17 @@ export class AlbumsService {
     if (query.search?.trim()) {
       qb.andWhere('a.title ILIKE :q', { q: `%${query.search.trim()}%` });
     }
+    if (query.isLiked) {
+      qb.andWhere(
+        'EXISTS (SELECT 1 FROM album_likes al WHERE al.album_id = a.id)',
+      );
+    }
     const sort =
       query.sort === 'title'
         ? 'a.title'
         : query.sort === 'year'
           ? 'a.year'
-          : 'a.created_at';
+          : 'a.createdAt';
     const order = query.order === 'asc' ? 'ASC' : 'DESC';
     qb.orderBy(sort, order);
     const total = await qb.clone().getCount();
@@ -82,6 +96,7 @@ export class AlbumsService {
       .take(limit)
       .getMany();
     const stats = await this.albumStats(rows.map((a) => a.id));
+    const liked = await this.likedAlbumIds(rows.map((a) => a.id));
     const data = rows.map((a) => {
       const s = stats.get(a.id);
       return {
@@ -95,6 +110,7 @@ export class AlbumsService {
         durationMs: s?.durationMs ?? 0,
         coverUrl: `/api/v1/covers/${a.id}.jpg`,
         playCount: s?.playCount ?? 0,
+        isLiked: liked.has(a.id),
       };
     });
     return { data, meta: buildMeta(total, page, limit) };
@@ -108,6 +124,7 @@ export class AlbumsService {
     if (!a) throw new NotFoundException('Album not found');
     const stats = await this.albumStats([id]);
     const s = stats.get(id);
+    const likedSet = await this.likedAlbumIds([id]);
     const tracks = await this.trackRepo.find({
       where: { albumId: id, deletedAt: IsNull() },
       order: { discNumber: 'ASC', trackNumber: 'ASC', title: 'ASC' },
@@ -128,6 +145,7 @@ export class AlbumsService {
       durationMs: s?.durationMs ?? 0,
       coverUrl: `/api/v1/covers/${a.id}.jpg`,
       playCount: s?.playCount ?? 0,
+      isLiked: likedSet.has(a.id),
       tracks: tracks.map((t) =>
         this.mapTrack(t, {
           isLiked: liked.has(t.id),

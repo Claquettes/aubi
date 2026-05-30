@@ -22,21 +22,40 @@ export class ArtistsService {
     private readonly tracksService: TracksService,
   ) {}
 
+  private async likedArtistIds(ids: string[]): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+    const rows = await this.dataSource.query<{ artist_id: string }[]>(
+      `SELECT artist_id FROM artist_likes WHERE artist_id = ANY($1)`,
+      [ids],
+    );
+    return new Set(rows.map((r) => r.artist_id));
+  }
+
   async findAll(query: ArtistsQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 50;
     const qb = this.artistRepo.createQueryBuilder('ar');
+    // Ne montrer que les artistes réellement présents via track_artists :
+    // exclut les artistes combinés « A, B » désormais éclatés.
+    qb.andWhere(
+      `EXISTS (SELECT 1 FROM track_artists ta JOIN tracks t ON t.id = ta.track_id WHERE ta.artist_id = ar.id AND t.deleted_at IS NULL)`,
+    );
     if (query.search?.trim()) {
       qb.andWhere('ar.name ILIKE :q', { q: `%${query.search.trim()}%` });
     }
     if (query.section) {
       qb.andWhere(
-        `EXISTS (SELECT 1 FROM tracks t WHERE t.artist_id = ar.id AND t.section = :sec AND t.deleted_at IS NULL)`,
+        `EXISTS (SELECT 1 FROM track_artists ta2 JOIN tracks t2 ON t2.id = ta2.track_id WHERE ta2.artist_id = ar.id AND t2.section = :sec AND t2.deleted_at IS NULL)`,
         { sec: query.section },
       );
     }
+    if (query.isLiked) {
+      qb.andWhere(
+        'EXISTS (SELECT 1 FROM artist_likes al WHERE al.artist_id = ar.id)',
+      );
+    }
     const sort =
-      query.sort === 'name' ? 'ar.name' : 'ar.created_at';
+      query.sort === 'name' ? 'ar.name' : 'ar.createdAt';
     const order = query.order === 'desc' ? 'DESC' : 'ASC';
     qb.orderBy(sort, order);
     const total = await qb.clone().getCount();
@@ -46,6 +65,7 @@ export class ArtistsService {
       .getMany();
     const ids = rows.map((r) => r.id);
     const counts = await this.artistCounts(ids);
+    const liked = await this.likedArtistIds(ids);
     const data = rows.map((a) => ({
       id: a.id,
       name: a.name,
@@ -53,6 +73,7 @@ export class ArtistsService {
       albumCount: counts.get(a.id)?.albumCount ?? 0,
       trackCount: counts.get(a.id)?.trackCount ?? 0,
       coverUrl: counts.get(a.id)?.coverUrl ?? null,
+      isLiked: liked.has(a.id),
     }));
     return { data, meta: buildMeta(total, page, limit) };
   }
@@ -66,23 +87,30 @@ export class ArtistsService {
     const albums = await this.dataSource.query<
       { artist_id: string; c: string }[]
     >(
-      `SELECT artist_id, COUNT(*)::int AS c FROM albums WHERE artist_id = ANY($1) GROUP BY artist_id`,
+      `SELECT ta.artist_id, COUNT(DISTINCT t.album_id)::int AS c
+       FROM track_artists ta JOIN tracks t ON t.id = ta.track_id
+       WHERE t.deleted_at IS NULL AND t.album_id IS NOT NULL AND ta.artist_id = ANY($1)
+       GROUP BY ta.artist_id`,
       [artistIds],
     );
     const tracks = await this.dataSource.query<
       { artist_id: string; c: string }[]
     >(
-      `SELECT artist_id, COUNT(*)::int AS c FROM tracks WHERE deleted_at IS NULL AND artist_id = ANY($1) GROUP BY artist_id`,
+      `SELECT ta.artist_id, COUNT(DISTINCT t.id)::int AS c
+       FROM track_artists ta JOIN tracks t ON t.id = ta.track_id
+       WHERE t.deleted_at IS NULL AND ta.artist_id = ANY($1)
+       GROUP BY ta.artist_id`,
       [artistIds],
     );
     const covers = await this.dataSource.query<
       { artist_id: string; album_id: string }[]
     >(
-      `SELECT DISTINCT ON (a.artist_id) a.artist_id, a.id AS album_id
-       FROM albums a
-       JOIN tracks t ON t.album_id = a.id AND t.deleted_at IS NULL
-       WHERE a.artist_id = ANY($1) AND a.cover_path IS NOT NULL
-       ORDER BY a.artist_id, a.created_at DESC`,
+      `SELECT DISTINCT ON (ta.artist_id) ta.artist_id, al.id AS album_id
+       FROM track_artists ta
+       JOIN tracks t ON t.id = ta.track_id AND t.deleted_at IS NULL
+       JOIN albums al ON al.id = t.album_id AND al.cover_path IS NOT NULL
+       WHERE ta.artist_id = ANY($1)
+       ORDER BY ta.artist_id, al.created_at DESC`,
       [artistIds],
     );
     const coverByArtist = new Map(
@@ -114,11 +142,19 @@ export class ArtistsService {
     if (!a) throw new NotFoundException('Artist not found');
     const counts = await this.artistCounts([id]);
     const c = counts.get(id);
-    const albums = await this.albumRepo.find({
-      where: { artistId: id },
-      order: { createdAt: 'DESC' },
-      take: 200,
-    });
+    const likedSet = await this.likedArtistIds([id]);
+    const albums = await this.dataSource.query<
+      { id: string; title: string; year: number | null }[]
+    >(
+      `SELECT DISTINCT al.id, al.title, al.year, al.created_at
+       FROM track_artists ta
+       JOIN tracks t ON t.id = ta.track_id AND t.deleted_at IS NULL
+       JOIN albums al ON al.id = t.album_id
+       WHERE ta.artist_id = $1
+       ORDER BY al.created_at DESC
+       LIMIT 200`,
+      [id],
+    );
     return {
       id: a.id,
       name: a.name,
@@ -126,6 +162,7 @@ export class ArtistsService {
       albumCount: c?.albumCount ?? 0,
       trackCount: c?.trackCount ?? 0,
       coverUrl: c?.coverUrl ?? null,
+      isLiked: likedSet.has(a.id),
       albums: albums.map((al) => ({
         id: al.id,
         title: al.title,

@@ -14,6 +14,7 @@ import { Concert } from '../../database/entities/concert.entity';
 import { Audiobook } from '../../database/entities/audiobook.entity';
 import { AudiobookChapter } from '../../database/entities/audiobook-chapter.entity';
 import { ScannerState } from '../../database/entities/scanner-state.entity';
+import { TrackArtist } from '../../database/entities/track-artist.entity';
 import { slugify } from '../../common/utils/slugify';
 import { MetadataService } from './metadata.service';
 import { CoverExtractorService } from './cover-extractor.service';
@@ -63,6 +64,8 @@ export class ScannerService implements OnModuleInit {
     private readonly chapterRepo: Repository<AudiobookChapter>,
     @InjectRepository(ScannerState)
     private readonly scannerRepo: Repository<ScannerState>,
+    @InjectRepository(TrackArtist)
+    private readonly trackArtistRepo: Repository<TrackArtist>,
     private readonly metadataService: MetadataService,
     private readonly coverExtractor: CoverExtractorService,
   ) {}
@@ -237,7 +240,8 @@ export class ScannerService implements OnModuleInit {
       albumTitle = parts[2] ?? albumTitle;
     }
 
-    const artist = await this.ensureArtist(artistName);
+    const artists = await this.ensureArtists(artistName);
+    const artist = artists[0];
     let concert: Concert | null = null;
     let album: Album | null = null;
 
@@ -267,6 +271,7 @@ export class ScannerService implements OnModuleInit {
     track.isCover = isCover;
     track.deletedAt = null;
     await this.trackRepo.save(track);
+    await this.syncTrackArtists(track.id, artists);
 
     if (album && meta.embeddedPicture) {
       try {
@@ -302,6 +307,42 @@ export class ScannerService implements OnModuleInit {
       await this.artistRepo.save(a);
     }
     return a;
+  }
+
+  /**
+   * « A, B & C feat. D » → [A, B, C, D]. Sépare sur les marqueurs de
+   * collaboration sûrs (virgule+espace, &, feat/ft/featuring).
+   */
+  private splitArtistNames(name: string): string[] {
+    const parts = name
+      .split(/,\s+|\s+&\s+|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+/i)
+      .map((p) => p.trim())
+      .filter(Boolean);
+    return parts.length ? parts : [name.trim() || 'Inconnu'];
+  }
+
+  async ensureArtists(name: string): Promise<Artist[]> {
+    const out: Artist[] = [];
+    const seen = new Set<string>();
+    for (const n of this.splitArtistNames(name)) {
+      const a = await this.ensureArtist(n);
+      if (!seen.has(a.id)) {
+        seen.add(a.id);
+        out.push(a);
+      }
+    }
+    return out;
+  }
+
+  async syncTrackArtists(
+    trackId: string,
+    artists: Artist[],
+  ): Promise<void> {
+    await this.trackArtistRepo.delete({ trackId });
+    const rows = artists.map((a, i) =>
+      this.trackArtistRepo.create({ trackId, artistId: a.id, position: i }),
+    );
+    if (rows.length) await this.trackArtistRepo.save(rows);
   }
 
   private async ensureAlbum(

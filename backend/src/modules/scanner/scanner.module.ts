@@ -7,6 +7,7 @@ import { Concert } from '../../database/entities/concert.entity';
 import { Audiobook } from '../../database/entities/audiobook.entity';
 import { AudiobookChapter } from '../../database/entities/audiobook-chapter.entity';
 import { ScannerState } from '../../database/entities/scanner-state.entity';
+import { TrackArtist } from '../../database/entities/track-artist.entity';
 import { ScannerController } from './scanner.controller';
 import { ScannerService } from './scanner.service';
 import { MetadataService } from './metadata.service';
@@ -22,6 +23,7 @@ import { CoverExtractorService } from './cover-extractor.service';
       Audiobook,
       AudiobookChapter,
       ScannerState,
+      TrackArtist,
     ]),
   ],
   controllers: [ScannerController],

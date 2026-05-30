@@ -97,6 +97,11 @@ export class TracksService {
     if (query.search?.trim()) {
       qb.andWhere('t.title ILIKE :q', { q: `%${query.search.trim()}%` });
     }
+    if (query.folder) {
+      qb.andWhere(`regexp_replace(t.file_path, '/[^/]*$', '') = :folder`, {
+        folder: query.folder,
+      });
+    }
     if (query.isCover === true) {
       qb.andWhere('t.is_cover = true');
     } else if (query.isCover === false) {
