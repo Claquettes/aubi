@@ -15,6 +15,9 @@ import { PlaylistsModule } from './modules/playlists/playlists.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { StatsModule } from './modules/stats/stats.module';
 import { SearchModule } from './modules/search/search.module';
+import { CollectionsModule } from './modules/collections/collections.module';
+import { GraphModule } from './modules/graph/graph.module';
+import { MetadataModule } from './modules/metadata/metadata.module';
 
 @Module({
   imports: [
@@ -33,6 +36,9 @@ import { SearchModule } from './modules/search/search.module';
     LikesModule,
     StatsModule,
     SearchModule,
+    CollectionsModule,
+    GraphModule,
+    MetadataModule,
   ],
 })
 export class AppModule {}
