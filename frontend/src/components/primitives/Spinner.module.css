@@ -1,13 +1,14 @@
-.spin {
-  width: 20px;
-  height: 20px;
+.spinner {
+  width: 24px;
+  height: 24px;
   border: 2px solid var(--color-border);
   border-top-color: var(--color-accent);
   border-radius: var(--radius-full);
-  animation: aubi-spin 0.7s linear infinite;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto;
 }
 
-@keyframes aubi-spin {
+@keyframes spin {
   to {
     transform: rotate(360deg);
   }
