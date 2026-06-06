@@ -1,0 +1,176 @@
+/* Cartes (album / artiste / concert / livre / playlist) */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+.card:hover .cardTitle {
+  color: var(--color-accent);
+}
+.cardCover {
+  position: relative;
+  border-radius: var(--radius-base);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--duration-base) var(--ease-default),
+    box-shadow var(--duration-base) var(--ease-default);
+}
+.card:hover .cardCover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+.card:active .cardCover {
+  transform: translateY(-1px) scale(0.99);
+}
+.collectionBadge {
+  position: absolute;
+  bottom: var(--space-2);
+  left: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: var(--text-2xs);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.cardLike {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 6px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-default);
+}
+.card:hover .cardLike,
+.cardLikeActive {
+  opacity: 1;
+}
+.cardBody {
+  min-width: 0;
+}
+.cardTitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+.cardSub {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+/* Ligne de titre */
+.row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-base);
+  cursor: pointer;
+}
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.rowRemove {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  display: flex;
+  padding: 4px;
+}
+.rowRemove:hover {
+  color: var(--color-text-primary);
+}
+.row:hover {
+  background: var(--color-bg-elevated);
+}
+.rowNum {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+.rowMain {
+  min-width: 0;
+}
+.rowTitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowSub {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+.rowActive {
+  background: color-mix(in srgb, var(--color-playing) 9%, transparent);
+}
+.rowActive .rowTitle {
+  color: var(--color-playing);
+}
+.rowDur {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* En-tête de section */
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: var(--space-8) 0 var(--space-4);
+}
+.sectionHeader:first-child {
+  margin-top: 0;
+}
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+}
+.sectionLink {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+.sectionLink:hover {
+  color: var(--color-accent);
+}
