@@ -7,6 +7,8 @@
 
   html {
     color-scheme: dark;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -17,8 +19,41 @@
     line-height: var(--leading-normal);
     color: var(--color-text-primary);
     background: var(--color-bg-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+    transition:
+      background-color var(--duration-slow) var(--ease-default),
+      color var(--duration-slow) var(--ease-default);
+  }
+
+  /* Fondu du reteintage "titre en cours" sur les grandes surfaces. */
+  aside,
+  nav,
+  input,
+  select,
+  textarea {
+    transition:
+      background-color var(--duration-slow) var(--ease-default),
+      border-color var(--duration-slow) var(--ease-default),
+      color var(--duration-slow) var(--ease-default);
+  }
+
+  /* Voile de profondeur, teinté par le contexte (album/lecture en cours). */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background: radial-gradient(
+      120% 60% at 50% -10%,
+      color-mix(in srgb, var(--color-playing) 12%, transparent),
+      transparent 60%
+    );
+    transition: background var(--duration-slow) var(--ease-default);
   }
 
   #root {
@@ -28,23 +63,102 @@
   a {
     color: var(--color-accent);
     text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
   }
-
   a:hover {
-    color: var(--color-accent-dim);
+    color: color-mix(in srgb, var(--color-accent) 80%, white);
   }
 
   button {
     font-family: inherit;
+    color: inherit;
+  }
+
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    letter-spacing: -0.022em;
+    font-weight: 700;
+  }
+  p {
+    margin: 0;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 40%, transparent);
+    color: var(--color-text-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-bg-overlay);
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-focus);
+    background-clip: padding-box;
   }
 
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: var(--radius-sm);
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer utils {
+  /* Animations premium réutilisables */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes shimmer {
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  .page-enter {
+    animation: fadeInUp var(--duration-slow) var(--ease-default);
   }
 }

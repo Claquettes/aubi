@@ -6,20 +6,17 @@
 .main {
   flex: 1;
   min-width: 0;
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
   padding: var(--space-4);
-  padding-bottom: calc(var(--space-20) + env(safe-area-inset-bottom, 0px));
-}
-
-@media (max-width: 899px) {
-  .main {
-    padding-bottom: calc(
-      var(--space-20) + var(--space-4) + env(safe-area-inset-bottom, 0px)
-    );
-  }
+  /* Place pour le mini-player flottant + la barre de nav mobile. */
+  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (min-width: 900px) {
   .main {
-    padding-bottom: calc(var(--space-12) + env(safe-area-inset-bottom, 0px));
+    padding: var(--space-8) var(--space-8);
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
   }
 }

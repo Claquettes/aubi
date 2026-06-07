@@ -1,12 +1,17 @@
 .aside {
   display: none;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-6) var(--space-4);
+  gap: 2px;
+  padding: var(--space-6) var(--space-3) var(--space-4);
   border-right: 1px solid var(--color-border);
-  min-height: 100vh;
-  background: var(--color-bg-elevated);
-  width: 220px;
+  background: var(--color-bg-mantle);
+  width: 236px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100dvh;
+  overflow-y: auto;
 }
 
 @media (min-width: 900px) {
@@ -17,18 +22,47 @@
 
 .brand {
   font-family: var(--font-display);
-  font-size: var(--text-xl);
-  color: var(--color-accent);
+  font-size: var(--text-2xl);
+  color: var(--color-text-primary);
+  padding: var(--space-2) var(--space-3);
   margin-bottom: var(--space-6);
+  letter-spacing: var(--tracking-tight);
+}
+
+.spacer {
+  flex: 1;
+  min-height: var(--space-4);
 }
 
 .link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
-  padding: var(--space-2) 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-base);
+  position: relative;
+  transition:
+    background var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
 }
-
-.link:hover,
-.link.active {
+.link:hover {
   color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-text-primary) 7%, transparent);
+}
+.active {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+.active::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 55%;
+  background: var(--color-accent);
+  border-radius: var(--radius-full);
 }

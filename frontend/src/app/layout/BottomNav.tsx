@@ -1,4 +1,11 @@
-import { BarChart2, BookOpen, Heart, Mic2, Music2, Search } from 'lucide-react';
+import {
+  BarChart2,
+  BookOpen,
+  Heart,
+  Music2,
+  Search,
+  Waypoints,
+} from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import styles from './BottomNav.module.css';
@@ -20,10 +27,10 @@ export function BottomNav() {
   return (
     <nav className={`${styles.nav} ${hasTrack ? styles.withPlayer : ''}`}>
       {item('/music', 'Musique', Music2)}
-      {item('/concerts', 'Concerts', Mic2)}
       {item('/audiobooks', 'Livres', BookOpen)}
       {item('/search', 'Recherche', Search)}
       {item('/likes', 'Favoris', Heart)}
+      {item('/graph', 'Graphe', Waypoints)}
       {item('/stats', 'Stats', BarChart2)}
     </nav>
   );
