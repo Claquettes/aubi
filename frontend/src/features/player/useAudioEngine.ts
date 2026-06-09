@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Howl } from 'howler';
 import { usePlayerStore } from './usePlayerStore';
 import { apiUrl } from '@/api/client';
+import { statsApi } from '@/api/stats';
 
 export function useAudioEngine() {
   const howlRef = useRef<Howl | null>(null);
@@ -11,6 +12,7 @@ export function useAudioEngine() {
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const volume = usePlayerStore((s) => s.volume);
   const setProgress = usePlayerStore((s) => s.setProgress);
+  const seekTo = usePlayerStore((s) => s.seekTo);
   useEffect(() => {
     if (!currentTrack) {
       howlRef.current?.unload();
@@ -32,7 +34,19 @@ export function useAudioEngine() {
         /* offline / CORS */
       },
       onend: () => {
-        usePlayerStore.getState().next();
+        const st = usePlayerStore.getState();
+        const ended = st.currentTrack;
+        if (ended) {
+          statsApi
+            .play({
+              trackId: ended.id,
+              durationMs: ended.durationMs,
+              completed: true,
+              source: st.source,
+            })
+            .catch(() => {});
+        }
+        st.next();
       },
     });
     howlRef.current = howl;
@@ -55,6 +69,14 @@ export function useAudioEngine() {
       h.pause();
     }
   }, [isPlaying]);
+
+  useEffect(() => {
+    const h = howlRef.current;
+    if (h && seekTo != null && h.duration()) {
+      h.seek(seekTo * h.duration());
+      usePlayerStore.getState().clearSeek();
+    }
+  }, [seekTo]);
 
   useEffect(() => {
     const h = howlRef.current;

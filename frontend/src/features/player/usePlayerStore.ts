@@ -28,6 +28,8 @@ export interface PlayerState {
   toggleShuffle: () => void;
   cycleRepeat: () => void;
   seek: (ratio: number) => void;
+  seekTo: number | null;
+  clearSeek: () => void;
   setFullPlayerOpen: (open: boolean) => void;
   setQueueOpen: (open: boolean) => void;
 }
@@ -43,6 +45,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   isShuffle: false,
   repeatMode: 'none',
   source: 'library',
+  seekTo: null,
   fullPlayerOpen: false,
   queueOpen: false,
 
@@ -119,8 +122,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const t = get().currentTrack;
     if (!t) return;
     const ms = Math.floor(ratio * t.durationMs);
-    set({ progress: ratio, currentTimeMs: ms });
+    set({ progress: ratio, currentTimeMs: ms, seekTo: ratio });
   },
+
+  clearSeek: () => set({ seekTo: null }),
 
   setFullPlayerOpen: (fullPlayerOpen) => set({ fullPlayerOpen }),
   setQueueOpen: (queueOpen) => set({ queueOpen }),

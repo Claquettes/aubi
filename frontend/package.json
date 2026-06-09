@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.8",
+    "@types/d3-force": "^3.0.10",
+    "d3-force": "^3.0.0",
     "howler": "^2.2.4",
     "lucide-react": "^0.469.0",
     "react": "^18.3.1",

@@ -1,0 +1,274 @@
+/* Contrôles */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+.ctrlBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  padding: var(--space-2);
+  border-radius: var(--radius-full);
+  transition: color var(--duration-fast) var(--ease-default);
+}
+.ctrlBtn:hover {
+  color: var(--color-text-primary);
+}
+.ctrlActive {
+  color: var(--color-playing);
+}
+.playBtn {
+  background: var(--color-playing);
+  color: var(--color-on-accent);
+  border: none;
+  cursor: pointer;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+.playBtn:hover {
+  transform: scale(1.05);
+}
+
+/* Barre de progression */
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.time {
+  font-size: var(--text-2xs);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: center;
+}
+.progressTrack {
+  flex: 1;
+  height: 4px;
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  position: relative;
+}
+.progressTrack:hover .progressFill {
+  filter: brightness(1.18);
+}
+.progressFill {
+  height: 100%;
+  background: var(--color-playing);
+  border-radius: var(--radius-full);
+  transition: background var(--duration-fast) var(--ease-default);
+}
+
+/* Indicateur "en lecture" (égaliseur animé) */
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+.eq span {
+  width: 2px;
+  background: var(--color-playing);
+  animation: eq 0.8s ease-in-out infinite;
+}
+.eq span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.eq span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes eq {
+  0%,
+  100% {
+    height: 3px;
+  }
+  50% {
+    height: 12px;
+  }
+}
+
+/* Lecteur plein écran */
+.full {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background:
+    radial-gradient(
+      130% 55% at 50% 0%,
+      color-mix(in srgb, var(--color-playing) 38%, transparent),
+      transparent 62%
+    ),
+    var(--color-bg-base);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: calc(var(--space-6) + env(safe-area-inset-top, 0px)) var(--space-6)
+    calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
+  max-width: 480px;
+  margin: 0 auto;
+  animation: fadeInUp var(--duration-base) var(--ease-default);
+}
+.fullArt > * {
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+}
+.fullHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.fullHead button {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+}
+.fullHead button:hover {
+  color: var(--color-text-primary);
+}
+.fullSource {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fullArt {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.fullTitleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.fullTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-text-primary);
+  line-height: var(--leading-tight);
+}
+.fullArtist {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+/* Volume */
+.volume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+  padding: 0 var(--space-2);
+}
+.volIcon {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+}
+.volumeSlider {
+  flex: 1;
+  accent-color: var(--color-playing);
+  height: 4px;
+  cursor: pointer;
+}
+
+/* File d'attente (drawer) */
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-drawer);
+}
+.queue {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(360px, 90vw);
+  background: var(--color-bg-elevated);
+  z-index: calc(var(--z-drawer) + 1);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--color-border);
+}
+.queueHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-secondary);
+}
+.queueHead button {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+}
+.queueList {
+  overflow-y: auto;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.queueItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--radius-base);
+}
+.queueItem:hover {
+  background: var(--color-bg-overlay);
+}
+.queueActive .queueTitle {
+  color: var(--color-playing);
+}
+.queueMeta {
+  min-width: 0;
+}
+.queueTitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.queueSub {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
