@@ -1,9 +1,11 @@
-import styles from './ArtistList.module.css';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { ArtistsGrid } from '@/features/library/ArtistsGrid';
 
 export function ArtistList() {
   return (
-    <div className={styles.root}>
-      <h1 className={styles.title}>Artistes</h1>
+    <div>
+      <PageHeader title="Artistes" />
+      <ArtistsGrid />
     </div>
   );
 }

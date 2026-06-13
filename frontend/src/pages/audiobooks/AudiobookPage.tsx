@@ -1,9 +1,8 @@
-import styles from './AudiobookPage.module.css';
+import { useParams } from 'react-router-dom';
+import { BookDetail } from '@/features/library/BookDetail';
 
 export function AudiobookPage() {
-  return (
-    <div className={styles.root}>
-      <h1 className={styles.title}>Livre</h1>
-    </div>
-  );
+  const { id } = useParams<{ id: string }>();
+  if (!id) return null;
+  return <BookDetail id={id} kicker="Livre audio" />;
 }

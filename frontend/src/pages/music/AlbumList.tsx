@@ -1,9 +1,11 @@
-import styles from './AlbumList.module.css';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { AlbumsGrid } from '@/features/library/AlbumsGrid';
 
 export function AlbumList() {
   return (
-    <div className={styles.root}>
-      <h1 className={styles.title}>Albums</h1>
+    <div>
+      <PageHeader title="Albums" />
+      <AlbumsGrid />
     </div>
   );
 }
