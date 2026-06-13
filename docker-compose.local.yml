@@ -1,0 +1,6 @@
+# Override LOCAL de dev (non commité) — pour essayer aubi sur la Tour.
+# Raison : le port 5173 est déjà occupé sur la machine → on remappe le frontend sur 5273.
+services:
+  aubi-frontend:
+    ports: !override
+      - "5273:5173"

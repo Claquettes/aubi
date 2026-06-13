@@ -1,0 +1,103 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+.tile {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.tileValue {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-text-primary);
+}
+.tileLabel {
+  font-size: var(--text-2xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+.block {
+  margin-bottom: var(--space-8);
+}
+.blockTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-4);
+}
+.charts {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+.topRow {
+  display: grid;
+  grid-template-columns: 20px 40px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-base);
+  cursor: pointer;
+}
+.topRow:hover {
+  background: var(--color-bg-elevated);
+}
+.topRank {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+.topMeta {
+  min-width: 0;
+}
+.topTitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topSub {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topCount {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.heatmap {
+  display: flex;
+  gap: 3px;
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+.heatWeek {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.heatCell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+
+@media (max-width: 640px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}

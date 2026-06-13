@@ -18,6 +18,11 @@ const AlbumList = lazy(() =>
 const AlbumPage = lazy(() =>
   import('@/pages/music/AlbumPage').then((m) => ({ default: m.AlbumPage })),
 );
+const CollectionPage = lazy(() =>
+  import('@/pages/music/CollectionPage').then((m) => ({
+    default: m.CollectionPage,
+  })),
+);
 const ConcertList = lazy(() =>
   import('@/pages/concerts/ConcertList').then((m) => ({
     default: m.ConcertList,
@@ -69,6 +74,9 @@ const SettingsPage = lazy(() =>
   import('@/pages/settings/SettingsPage').then((m) => ({
     default: m.SettingsPage,
   })),
+);
+const GraphPage = lazy(() =>
+  import('@/pages/graph/GraphPage').then((m) => ({ default: m.GraphPage })),
 );
 
 function SuspenseWrap({ children }: { children: ReactNode }) {
@@ -127,6 +135,14 @@ export function AppRouter() {
           element={
             <SuspenseWrap>
               <AlbumPage />
+            </SuspenseWrap>
+          }
+        />
+        <Route
+          path="/music/collections/:id"
+          element={
+            <SuspenseWrap>
+              <CollectionPage />
             </SuspenseWrap>
           }
         />
@@ -223,6 +239,14 @@ export function AppRouter() {
           element={
             <SuspenseWrap>
               <SettingsPage />
+            </SuspenseWrap>
+          }
+        />
+        <Route
+          path="/graph"
+          element={
+            <SuspenseWrap>
+              <GraphPage />
             </SuspenseWrap>
           }
         />

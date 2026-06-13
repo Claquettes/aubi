@@ -48,7 +48,7 @@ services:
       PORT: "3000"
       COVERS_PATH: /app/covers
     volumes:
-      - ${MUSIC_PATH}:/music:ro
+      - ${MUSIC_PATH}:/music:rw
       - aubi_covers:/app/covers
     networks:
       - homelab_proxy
