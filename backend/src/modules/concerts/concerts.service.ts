@@ -61,8 +61,8 @@ export class ConcertsService {
         { q: `%${query.search.trim()}%` },
       );
     }
-    qb.orderBy('c.concert_date', 'DESC', 'NULLS LAST').addOrderBy(
-      'c.created_at',
+    qb.orderBy('c.concertDate', 'DESC', 'NULLS LAST').addOrderBy(
+      'c.createdAt',
       'DESC',
     );
     const total = await qb.clone().getCount();

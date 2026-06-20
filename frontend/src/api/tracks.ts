@@ -21,9 +21,20 @@ export const tracksApi = {
     apiJson<Paginated<Track>>(`/api/v1/tracks${qs({ ...q })}`),
   get: (id: string) => apiJson<Track>(`/api/v1/tracks/${id}`),
   similar: (id: string) => apiJson<Track[]>(`/api/v1/tracks/${id}/similar`),
-  edit: (id: string, dto: { title?: string; artistName?: string }) =>
+  edit: (id: string, dto: { title?: string; artistName?: string; genre?: string }) =>
     apiJson<{ id: string; fileWritten: boolean }>(`/api/v1/tracks/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(dto),
     }),
+  bulkEdit: (dto: {
+    ids: string[];
+    album?: string;
+    artistName?: string;
+    genre?: string;
+    year?: number;
+  }) =>
+    apiJson<{ updated: number; filesWritten: number; total: number }>(
+      `/api/v1/tracks/bulk`,
+      { method: 'PATCH', body: JSON.stringify(dto) },
+    ),
 };

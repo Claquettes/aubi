@@ -19,6 +19,9 @@ import { ScannerState } from './entities/scanner-state.entity';
 import { InitialSchema1738761600000 } from './migrations/1738761600000-InitialSchema';
 import { AlbumArtistLikes1760000000000 } from './migrations/1760000000000-AlbumArtistLikes';
 import { TrackArtists1760000100000 } from './migrations/1760000100000-TrackArtists';
+import { TrackGenre1760000200000 } from './migrations/1760000200000-TrackGenre';
+import { TrackMetadataLocked1760000300000 } from './migrations/1760000300000-TrackMetadataLocked';
+import { AlbumFolderCompilation1760000400000 } from './migrations/1760000400000-AlbumFolderCompilation';
 
 config({ path: join(__dirname, '../../.env') });
 
@@ -26,6 +29,9 @@ const migrations = [
   InitialSchema1738761600000,
   AlbumArtistLikes1760000000000,
   TrackArtists1760000100000,
+  TrackGenre1760000200000,
+  TrackMetadataLocked1760000300000,
+  AlbumFolderCompilation1760000400000,
 ];
 
 export default new DataSource({

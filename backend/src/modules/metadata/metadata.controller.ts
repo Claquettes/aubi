@@ -1,10 +1,16 @@
 import { Body, Controller, Param, ParseUUIDPipe, Patch } from '@nestjs/common';
 import { MetadataEditService } from './metadata-edit.service';
-import { EditAlbumDto, EditTrackDto } from './dto/edit.dto';
+import { BulkEditDto, EditAlbumDto, EditTrackDto } from './dto/edit.dto';
 
 @Controller()
 export class MetadataController {
   constructor(private readonly meta: MetadataEditService) {}
+
+  // Déclaré avant tracks/:id pour ne pas être avalé par le ParseUUIDPipe.
+  @Patch('tracks/bulk')
+  bulkEdit(@Body() dto: BulkEditDto) {
+    return this.meta.bulkEdit(dto);
+  }
 
   @Patch('tracks/:id')
   editTrack(@Param('id', ParseUUIDPipe) id: string, @Body() dto: EditTrackDto) {

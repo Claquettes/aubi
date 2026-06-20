@@ -45,7 +45,9 @@ const entities = [
         url: config.getOrThrow<string>('databaseUrl'),
         entities,
         synchronize: false,
-        logging: config.get('nodeEnv') === 'development',
+        // Uniquement erreurs/avertissements : le log de chaque requête ralentit
+        // fortement les scans (des milliers de requêtes) et noie les logs.
+        logging: ['error', 'warn'],
       }),
     }),
     TypeOrmModule.forFeature(entities),

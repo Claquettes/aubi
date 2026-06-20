@@ -72,6 +72,16 @@ export class Track {
   @Column({ name: 'is_cover', type: 'boolean', default: false })
   isCover: boolean;
 
+  @Column({ type: 'text', nullable: true })
+  genre: string | null;
+
+  /**
+   * Vrai quand les métadonnées (titre/artiste/album/genre) ont été éditées
+   * manuellement : le scanner ne doit plus les écraser à partir des fichiers.
+   */
+  @Column({ name: 'metadata_locked', type: 'boolean', default: false })
+  metadataLocked: boolean;
+
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 

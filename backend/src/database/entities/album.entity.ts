@@ -2,17 +2,16 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-  Unique,
 } from 'typeorm';
 import { Artist } from './artist.entity';
 import { Track } from './track.entity';
 
 @Entity('albums')
-@Unique(['artistId', 'slug'])
 export class Album {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -22,6 +21,18 @@ export class Album {
 
   @Column({ type: 'text' })
   slug: string;
+
+  /**
+   * Dossier disque de l'album : identité stable (un dossier = un album).
+   * Évite les doublons titre×artiste des compilations multi-artistes.
+   */
+  @Index('idx_albums_folder_path')
+  @Column({ name: 'folder_path', type: 'text', nullable: true })
+  folderPath: string | null;
+
+  /** Dossier à beaucoup d'artistes → traité comme une collection/playlist. */
+  @Column({ name: 'is_compilation', type: 'boolean', default: false })
+  isCompilation: boolean;
 
   @Column({ name: 'artist_id', type: 'uuid', nullable: true })
   artistId: string | null;

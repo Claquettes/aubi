@@ -8,6 +8,7 @@ export interface AlbumsQuery {
   sort?: string;
   order?: 'asc' | 'desc';
   isLiked?: boolean;
+  isCompilation?: boolean;
   page?: number;
   limit?: number;
 }

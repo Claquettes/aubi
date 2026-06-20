@@ -82,6 +82,11 @@ export class AlbumsService {
         'EXISTS (SELECT 1 FROM album_likes al WHERE al.album_id = a.id)',
       );
     }
+    // Onglet Albums = vrais albums ; les compilations (≥8 artistes) sont
+    // présentées comme des collections dans la page Playlists.
+    qb.andWhere('a.is_compilation = :comp', {
+      comp: query.isCompilation === true,
+    });
     const sort =
       query.sort === 'title'
         ? 'a.title'
@@ -111,6 +116,7 @@ export class AlbumsService {
         coverUrl: `/api/v1/covers/${a.id}.jpg`,
         playCount: s?.playCount ?? 0,
         isLiked: liked.has(a.id),
+        isCompilation: a.isCompilation,
       };
     });
     return { data, meta: buildMeta(total, page, limit) };
@@ -146,6 +152,7 @@ export class AlbumsService {
       coverUrl: `/api/v1/covers/${a.id}.jpg`,
       playCount: s?.playCount ?? 0,
       isLiked: likedSet.has(a.id),
+      isCompilation: a.isCompilation,
       tracks: tracks.map((t) =>
         this.mapTrack(t, {
           isLiked: liked.has(t.id),

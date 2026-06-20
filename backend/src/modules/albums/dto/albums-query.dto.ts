@@ -15,4 +15,10 @@ export class AlbumsQueryDto extends PaginationDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isLiked?: boolean;
+
+  // true → renvoie les compilations (collections) ; sinon les vrais albums.
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isCompilation?: boolean;
 }

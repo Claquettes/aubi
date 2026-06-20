@@ -35,6 +35,7 @@ export interface Album {
   coverUrl: string | null;
   playCount: number;
   isLiked: boolean;
+  isCompilation: boolean;
 }
 
 export interface AlbumDetail extends Album {

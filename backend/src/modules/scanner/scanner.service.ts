@@ -168,6 +168,7 @@ export class ScannerService implements OnModuleInit {
         if (i % 50 === 0) await this.scannerRepo.save(state);
       }
       await this.markMissingDeleted(seen);
+      await this.reconcileAlbums();
       const count = await this.trackRepo.count({
         where: { deletedAt: IsNull() },
       });
@@ -187,6 +188,49 @@ export class ScannerService implements OnModuleInit {
     } finally {
       this.scanRunning = false;
     }
+  }
+
+  /**
+   * Recale les albums après un scan :
+   *  1. artiste de l'album = artiste le plus fréquent de ses pistes (respecte
+   *     les éditions manuelles, ex. « soeur ») ;
+   *  2. `is_compilation` = dossier à ≥ 8 artistes distincts (→ collection) ;
+   *  3. purge des albums orphelins (issus de l'ancienne clé titre×artiste).
+   */
+  private async reconcileAlbums(): Promise<void> {
+    await this.albumRepo.query(`
+      UPDATE albums a SET artist_id = s.aid
+      FROM (
+        SELECT t.album_id, mode() WITHIN GROUP (ORDER BY t.artist_id) AS aid
+        FROM tracks t
+        WHERE t.deleted_at IS NULL AND t.album_id IS NOT NULL
+          AND t.artist_id IS NOT NULL
+        GROUP BY t.album_id
+      ) s
+      WHERE a.id = s.album_id AND a.artist_id IS DISTINCT FROM s.aid
+    `);
+    await this.albumRepo.query(`
+      UPDATE albums a SET is_compilation = (s.cnt >= 8)
+      FROM (
+        SELECT t.album_id, COUNT(DISTINCT ta.artist_id) AS cnt
+        FROM tracks t JOIN track_artists ta ON ta.track_id = t.id
+        WHERE t.deleted_at IS NULL AND t.album_id IS NOT NULL
+        GROUP BY t.album_id
+      ) s
+      WHERE a.id = s.album_id AND a.is_compilation IS DISTINCT FROM (s.cnt >= 8)
+    `);
+    // Retire les likes pointant un album devenu orphelin, puis purge les albums
+    // sans aucune piste vivante (anciens doublons titre×artiste).
+    await this.albumRepo.query(`
+      DELETE FROM album_likes al WHERE NOT EXISTS (
+        SELECT 1 FROM tracks t WHERE t.album_id = al.album_id AND t.deleted_at IS NULL
+      )
+    `);
+    await this.albumRepo.query(`
+      DELETE FROM albums a WHERE NOT EXISTS (
+        SELECT 1 FROM tracks t WHERE t.album_id = a.id AND t.deleted_at IS NULL
+      )
+    `);
   }
 
   private async markMissingDeleted(seen: Set<string>): Promise<void> {
@@ -240,6 +284,10 @@ export class ScannerService implements OnModuleInit {
       albumTitle = parts[2] ?? albumTitle;
     }
 
+    // Dossier de l'album = répertoire contenant la piste (relatif à /music).
+    // Sert d'identité stable pour regrouper toutes les pistes d'un dossier.
+    const albumFolder = parts.length > 1 ? parts.slice(0, -1).join(sep) : null;
+
     const artists = await this.ensureArtists(artistName);
     const artist = artists[0];
     let concert: Concert | null = null;
@@ -249,17 +297,24 @@ export class ScannerService implements OnModuleInit {
       const folderTitle = parts[1];
       concert = await this.ensureConcert(folderTitle, artist);
     } else {
-      album = await this.ensureAlbum(albumTitle, artist, isCover);
+      album = await this.ensureAlbum(albumTitle, artist, isCover, albumFolder);
     }
 
     let track = await this.trackRepo.findOne({ where: { filePath: absPath } });
     if (!track) {
       track = this.trackRepo.create({ filePath: absPath });
     }
-    track.title = meta.title;
-    track.artistId = artist.id;
+    // Une édition manuelle (metadataLocked) prime : on ne réécrit pas
+    // titre / artiste / album depuis le fichier. Les infos techniques
+    // (durée, format, taille…) restent toujours resynchronisées.
+    if (!track.metadataLocked) {
+      track.title = meta.title;
+      track.artistId = artist.id;
+      track.concertId = concert?.id ?? null;
+    }
+    // Le regroupement par album/dossier n'est pas une métadonnée éditée par
+    // l'utilisateur : on le resynchronise toujours (même si le titre est verrouillé).
     track.albumId = album?.id ?? null;
-    track.concertId = concert?.id ?? null;
     track.trackNumber = meta.trackNumber;
     track.discNumber = meta.discNumber;
     track.durationMs = meta.durationMs;
@@ -271,7 +326,9 @@ export class ScannerService implements OnModuleInit {
     track.isCover = isCover;
     track.deletedAt = null;
     await this.trackRepo.save(track);
-    await this.syncTrackArtists(track.id, artists);
+    if (!track.metadataLocked) {
+      await this.syncTrackArtists(track.id, artists);
+    }
 
     if (album && meta.embeddedPicture) {
       try {
@@ -311,11 +368,14 @@ export class ScannerService implements OnModuleInit {
 
   /**
    * « A, B & C feat. D » → [A, B, C, D]. Sépare sur les marqueurs de
-   * collaboration sûrs (virgule+espace, &, feat/ft/featuring).
+   * collaboration sûrs : virgule+espace, virgule pleine largeur « ， » ou
+   * idéographique « 、 » (exports CJK), &, ＆, feat/ft/featuring.
    */
   private splitArtistNames(name: string): string[] {
     const parts = name
-      .split(/,\s+|\s+&\s+|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+/i)
+      .split(
+        /,\s+|\s*[，、]\s*|\s+&\s+|\s*＆\s*|\s+feat\.?\s+|\s+ft\.?\s+|\s+featuring\s+/i,
+      )
       .map((p) => p.trim())
       .filter(Boolean);
     return parts.length ? parts : [name.trim() || 'Inconnu'];
@@ -345,20 +405,28 @@ export class ScannerService implements OnModuleInit {
     if (rows.length) await this.trackArtistRepo.save(rows);
   }
 
-  private async ensureAlbum(
+  async ensureAlbum(
     title: string,
     artist: Artist,
     isCoverAlbum: boolean,
+    folderPath: string | null = null,
   ): Promise<Album> {
     const slug = slugify(title + (isCoverAlbum ? '-cover' : ''));
-    let album = await this.albumRepo.findOne({
-      where: { artistId: artist.id, slug },
-    });
+    // Un dossier = un album. Clé stable par dossier : une compilation
+    // multi-artistes ne produit plus qu'un seul album. Repli sur (artiste, slug)
+    // pour les pistes sans dossier ou les albums créés manuellement.
+    // Pistes sans dossier (singles à la racine de /music) : regroupées par
+    // titre, indépendamment de l'artiste — tous les « Unknown Album » n'en
+    // forment qu'un seul (compilation) au lieu d'un album par artiste.
+    let album = folderPath
+      ? await this.albumRepo.findOne({ where: { folderPath } })
+      : await this.albumRepo.findOne({ where: { slug, folderPath: IsNull() } });
     if (!album) {
       album = this.albumRepo.create({
         title,
         slug,
         artistId: artist.id,
+        folderPath,
       });
       await this.albumRepo.save(album);
     }
