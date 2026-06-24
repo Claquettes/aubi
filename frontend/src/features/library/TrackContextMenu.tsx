@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { MoreHorizontal, Pencil, Plus } from 'lucide-react';
+import { CheckSquare, MoreHorizontal, Pencil, Plus } from 'lucide-react';
 import { Modal } from '@/components/primitives/Modal';
 import { AddToPlaylistModal } from '@/features/playlists/AddToPlaylistModal';
 import { EditTrackModal } from '@/features/metadata/EditTrackModal';
+import { useSelection } from '@/features/selection/selectionStore';
 import type { Track } from '@/types/api';
 
 const itemStyle = {
@@ -25,6 +26,7 @@ export function TrackContextMenu({ track }: { track: Track }) {
   const [menu, setMenu] = useState(false);
   const [addPl, setAddPl] = useState(false);
   const [edit, setEdit] = useState(false);
+  const enterSelection = useSelection((s) => s.enter);
 
   return (
     <>
@@ -68,6 +70,16 @@ export function TrackContextMenu({ track }: { track: Track }) {
             }}
           >
             <Pencil size={18} /> Modifier les infos
+          </button>
+          <button
+            type="button"
+            style={itemStyle}
+            onClick={() => {
+              setMenu(false);
+              enterSelection(track.id);
+            }}
+          >
+            <CheckSquare size={18} /> Sélectionner des titres
           </button>
         </Modal>
       )}

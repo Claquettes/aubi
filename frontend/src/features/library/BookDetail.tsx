@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
 import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 import type { AudiobookChapter, AudiobookDetail, Track } from '@/types/api';
 import { DetailHero } from './DetailHero';
@@ -35,6 +36,7 @@ export function BookDetail({ id, kicker }: { id: string; kicker: string }) {
     enabled: !!id,
   });
   const accent = useCoverColor(book?.coverUrl);
+  usePageTheme(book?.coverUrl);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
 
@@ -49,10 +51,7 @@ export function BookDetail({ id, kicker }: { id: string; kicker: string }) {
   };
 
   return (
-    <div
-      className="page-enter"
-      style={accent ? ({ '--color-accent': accent } as CSSProperties) : undefined}
-    >
+    <div className="page-enter">
       <DetailHero
         accent={accent}
         coverUrl={book.coverUrl}

@@ -9,6 +9,7 @@ import { DetailHero } from '@/features/library/DetailHero';
 import { TrackRow } from '@/features/library/TrackRow';
 import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 import styles from './ConcertPage.module.css';
 
@@ -20,6 +21,7 @@ export function ConcertPage() {
     enabled: !!id,
   });
   const accent = useCoverColor(concert?.coverUrl);
+  usePageTheme(concert?.coverUrl);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
 
@@ -37,10 +39,7 @@ export function ConcertPage() {
     : null;
 
   return (
-    <div
-      className="page-enter"
-      style={accent ? ({ '--color-accent': accent } as CSSProperties) : undefined}
-    >
+    <div className="page-enter">
       <DetailHero
         accent={accent}
         coverUrl={concert.coverUrl}

@@ -1,16 +1,19 @@
 import type { ReactNode } from 'react';
+import styles from './EmptyState.module.css';
 
-export function EmptyState({ children }: { children: ReactNode }) {
+export function EmptyState({
+  children,
+  mark = '✳',
+}: {
+  children: ReactNode;
+  mark?: ReactNode;
+}) {
   return (
-    <div
-      style={{
-        padding: 'var(--space-12) var(--space-4)',
-        textAlign: 'center',
-        color: 'var(--color-text-secondary)',
-        fontSize: 'var(--text-sm)',
-      }}
-    >
-      {children}
+    <div className={styles.wrap}>
+      <div className={styles.mark} aria-hidden="true">
+        {mark}
+      </div>
+      <p className={styles.text}>{children}</p>
     </div>
   );
 }

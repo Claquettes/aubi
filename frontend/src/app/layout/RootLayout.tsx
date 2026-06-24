@@ -4,7 +4,8 @@ import { MiniPlayer } from '@/features/player/MiniPlayer';
 import { useAudioEngine } from '@/features/player/useAudioEngine';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useMediaSession } from '@/hooks/useMediaSession';
-import { useNowPlayingTheme } from '@/hooks/useNowPlayingTheme';
+import { useAppTheme } from '@/hooks/appTheme';
+import { SelectionBar } from '@/features/selection/SelectionBar';
 import { BottomNav } from './BottomNav';
 import { Sidebar } from './Sidebar';
 import styles from './RootLayout.module.css';
@@ -13,7 +14,7 @@ export function RootLayout() {
   useAudioEngine();
   useMediaSession();
   useKeyboardShortcuts();
-  useNowPlayingTheme();
+  useAppTheme();
   return (
     <div className={styles.shell}>
       <Sidebar />
@@ -23,6 +24,7 @@ export function RootLayout() {
       <MiniPlayer />
       <FullPlayer />
       <BottomNav />
+      <SelectionBar />
     </div>
   );
 }

@@ -4,19 +4,40 @@
 }
 
 .main {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: 1180px;
-  margin: 0 auto;
   width: 100%;
-  padding: var(--space-4);
-  /* Place pour le mini-player flottant + la barre de nav mobile. */
-  padding-bottom: calc(160px + env(safe-area-inset-bottom, 0px));
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--space-8) var(--page-gutter) 0;
+  /* Place pour la nav mobile (72px) + mini-player (80px) + safe-area + 32px. */
+  padding-bottom: calc(
+    72px + 80px + env(safe-area-inset-bottom, 0px) + var(--space-8)
+  );
 }
 
-@media (min-width: 900px) {
+@media (min-width: 640px) {
   .main {
-    padding: var(--space-8) var(--space-8);
-    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+    padding-left: var(--page-gutter-tablet);
+    padding-right: var(--page-gutter-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .main {
+    padding-top: var(--space-12);
+    padding-left: var(--page-gutter-desktop);
+    padding-right: var(--page-gutter-desktop);
+    /* Plus de nav mobile : place pour le mini-player seul (88px). */
+    padding-bottom: calc(
+      88px + env(safe-area-inset-bottom, 0px) + var(--space-8)
+    );
+  }
+}
+
+@media (min-width: 1600px) {
+  .main {
+    padding-left: var(--page-gutter-wide);
+    padding-right: var(--page-gutter-wide);
   }
 }

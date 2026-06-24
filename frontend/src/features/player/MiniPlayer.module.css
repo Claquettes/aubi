@@ -2,27 +2,26 @@
   position: fixed;
   left: var(--space-3);
   right: var(--space-3);
-  bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px) + var(--space-2));
   z-index: var(--z-player);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--color-playing) 12%, var(--glass-bg));
-  backdrop-filter: blur(var(--blur-glass)) saturate(1.5);
-  -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.5);
-  animation: fadeInUp var(--duration-base) var(--ease-default);
-  transition: background var(--duration-slow) var(--ease-default);
+  box-shadow: var(--shadow-paper-2);
+  border: 1px solid var(--border-dynamic);
+  background: var(--surface-dynamic);
+  animation: fadeInUp var(--duration-medium) var(--ease-standard);
+  transition: background var(--duration-theme) var(--ease-standard);
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1024px) {
   .wrap {
-    left: 0;
+    left: var(--sidebar-width);
     right: 0;
     bottom: 0;
     border-radius: 0;
     border: none;
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid var(--border-dynamic);
+    box-shadow: var(--shadow-player);
   }
 }
 
@@ -32,15 +31,14 @@
   right: 0;
   top: 0;
   height: 2px;
-  background: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  background: color-mix(in oklab, var(--color-ink) 12%, transparent);
   z-index: 1;
 }
 .progress > span {
   display: block;
   height: 100%;
-  background: var(--color-playing);
+  background: var(--art-action, var(--color-accent));
   width: 0%;
-  transition: width 120ms linear;
 }
 
 .bar {
@@ -48,7 +46,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: 60px;
+  min-height: 80px;
+}
+@media (min-width: 1024px) {
+  .bar {
+    min-height: 88px;
+    padding-inline: var(--space-5);
+    gap: var(--space-4);
+  }
 }
 
 .meta {
@@ -59,19 +64,20 @@
   border: none;
   text-align: left;
   padding: 0;
+  color: inherit;
 }
 .title {
-  font-size: var(--text-sm);
+  font-size: var(--step-0);
   font-weight: var(--weight-medium);
-  color: var(--color-text-primary);
+  color: var(--color-ink);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .sub {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
   margin: 2px 0 0;
   white-space: nowrap;
   overflow: hidden;

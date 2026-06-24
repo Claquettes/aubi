@@ -10,9 +10,10 @@
 }
 
 .primary {
-  background: var(--color-accent);
-  color: var(--color-bg-base);
+  background: var(--art-action, var(--color-accent));
+  color: var(--art-action-ink, var(--color-canvas));
   padding: var(--space-2) var(--space-4);
+  font-weight: var(--weight-semibold);
 }
 
 .primary:hover {

@@ -12,6 +12,7 @@ import { TrackRow } from '@/features/library/TrackRow';
 import { EditAlbumModal } from '@/features/metadata/EditAlbumModal';
 import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 import styles from './AlbumPage.module.css';
 
@@ -23,6 +24,7 @@ export function AlbumPage() {
     enabled: !!id,
   });
   const accent = useCoverColor(album?.coverUrl);
+  usePageTheme(album?.coverUrl);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
   const [editing, setEditing] = useState(false);
@@ -38,21 +40,18 @@ export function AlbumPage() {
   };
 
   return (
-    <div
-      className="page-enter"
-      style={accent ? ({ '--color-accent': accent } as CSSProperties) : undefined}
-    >
+    <div className="page-enter">
       <DetailHero
         accent={accent}
         coverUrl={album.coverUrl}
         label={album.title}
-        kicker="Album"
+        kicker={album.isCompilation ? 'Collection' : 'Album'}
         title={album.title}
         subtitle={
           <>
-            {album.artist?.name ?? '—'}
-            {album.year ? ` · ${album.year}` : ''} · {album.trackCount} titres ·{' '}
-            <DurationText ms={album.durationMs} />
+            {album.isCompilation ? 'Artistes variés' : (album.artist?.name ?? '—')}
+            {!album.isCompilation && album.year ? ` · ${album.year}` : ''} ·{' '}
+            {album.trackCount} titres · <DurationText ms={album.durationMs} />
           </>
         }
         actions={

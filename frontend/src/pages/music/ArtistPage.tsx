@@ -8,6 +8,7 @@ import { Spinner } from '@/components/primitives/Spinner';
 import { AlbumCard } from '@/features/library/AlbumCard';
 import { DetailHero } from '@/features/library/DetailHero';
 import { EntityLikeButton } from '@/features/likes/EntityLikeButton';
+import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 import styles from './ArtistPage.module.css';
 
@@ -19,6 +20,7 @@ export function ArtistPage() {
     enabled: !!id,
   });
   const accent = useCoverColor(artist?.coverUrl);
+  usePageTheme(artist?.coverUrl);
 
   if (isLoading) return <Spinner />;
   if (!artist) return <EmptyState>Artiste introuvable.</EmptyState>;
@@ -26,10 +28,7 @@ export function ArtistPage() {
   const albums = artist.albums ?? [];
 
   return (
-    <div
-      className="page-enter"
-      style={accent ? ({ '--color-accent': accent } as CSSProperties) : undefined}
-    >
+    <div className="page-enter">
       <DetailHero
         accent={accent}
         round

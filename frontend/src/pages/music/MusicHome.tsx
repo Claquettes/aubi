@@ -3,11 +3,10 @@ import { ArrowDownAZ, ArrowUpZA, Heart } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { AlbumsGrid } from '@/features/library/AlbumsGrid';
 import { ArtistsGrid } from '@/features/library/ArtistsGrid';
-import { CollectionsGrid } from '@/features/library/CollectionsGrid';
 import { useDebounce } from '@/hooks/useDebounce';
 import styles from './MusicHome.module.css';
 
-type Tab = 'albums' | 'artists' | 'collections';
+type Tab = 'albums' | 'artists';
 
 const SORTS: Record<'albums' | 'artists', { value: string; label: string }[]> = {
   albums: [
@@ -31,7 +30,7 @@ export function MusicHome() {
 
   const switchTab = (t: Tab) => {
     setTab(t);
-    if (t !== 'collections') setSort(SORTS[t][0].value);
+    setSort(SORTS[t][0].value);
   };
 
   const tabBtn = (t: Tab, label: string) => (
@@ -51,10 +50,9 @@ export function MusicHome() {
       <div className={styles.tabs}>
         {tabBtn('albums', 'Albums')}
         {tabBtn('artists', 'Artistes')}
-        {tabBtn('collections', 'Collections')}
       </div>
 
-      {tab !== 'collections' && (
+      {(
         <div className={styles.controls}>
           <input
             className={styles.search}
@@ -105,15 +103,13 @@ export function MusicHome() {
           order={order}
           isLiked={onlyLiked || undefined}
         />
-      ) : tab === 'artists' ? (
+      ) : (
         <ArtistsGrid
           search={debounced}
           sort={sort}
           order={order}
           isLiked={onlyLiked || undefined}
         />
-      ) : (
-        <CollectionsGrid />
       )}
     </div>
   );

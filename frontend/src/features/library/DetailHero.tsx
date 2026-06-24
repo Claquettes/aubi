@@ -46,13 +46,16 @@ export function DetailHero({
         />
       )}
       <div className={styles.wash} />
+      <div className={styles.fibers} aria-hidden="true" />
       <div className={styles.content}>
-        <div className={`${styles.cover} ${round ? styles.round : ''}`}>
-          {url ? (
-            <img src={url} alt="" />
-          ) : (
-            <span className={styles.initials}>{initials(label)}</span>
-          )}
+        <div className={`${styles.coverWrap} ${round ? styles.roundWrap : ''}`}>
+          <div className={`${styles.cover} ${round ? styles.round : ''}`}>
+            {url ? (
+              <img src={url} alt="" />
+            ) : (
+              <span className={styles.initials}>{initials(label)}</span>
+            )}
+          </div>
         </div>
         <div className={styles.meta}>
           {kicker && <p className={styles.kicker}>{kicker}</p>}

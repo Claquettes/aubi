@@ -8,7 +8,9 @@ export function ArtistCard({ artist }: { artist: Artist }) {
   return (
     <Link to={`/music/artists/${artist.id}`} className={styles.card}>
       <div className={styles.cardCover}>
-        <CoverArt src={artist.coverUrl} label={artist.name} size="lg" />
+        <div className={styles.coverImg}>
+          <CoverArt src={artist.coverUrl} label={artist.name} size="fill" />
+        </div>
         <EntityLikeButton
           kind="artist"
           id={artist.id}
@@ -20,7 +22,7 @@ export function ArtistCard({ artist }: { artist: Artist }) {
         <div className={styles.cardTitle}>{artist.name}</div>
         <div className={styles.cardSub}>
           {artist.albumCount} album{artist.albumCount > 1 ? 's' : ''} ·{' '}
-          {artist.trackCount} titres
+          {artist.trackCount} titre{artist.trackCount > 1 ? 's' : ''}
         </div>
       </div>
     </Link>

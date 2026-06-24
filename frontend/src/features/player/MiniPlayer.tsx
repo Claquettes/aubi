@@ -25,7 +25,7 @@ export function MiniPlayer() {
       </div>
       <div className={styles.bar}>
         <CoverArt
-          size="xs"
+          size="sm"
           label={label}
           src={current.coverUrl ?? undefined}
         />

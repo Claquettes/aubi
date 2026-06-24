@@ -9,6 +9,7 @@ import { DetailHero } from '@/features/library/DetailHero';
 import { TrackRow } from '@/features/library/TrackRow';
 import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 
 export function CollectionPage() {
@@ -19,6 +20,7 @@ export function CollectionPage() {
     enabled: !!id,
   });
   const accent = useCoverColor(col?.coverUrl);
+  usePageTheme(col?.coverUrl);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
 
@@ -33,10 +35,7 @@ export function CollectionPage() {
   };
 
   return (
-    <div
-      className="page-enter"
-      style={accent ? ({ '--color-accent': accent } as CSSProperties) : undefined}
-    >
+    <div className="page-enter">
       <DetailHero
         accent={accent}
         coverUrl={col.coverUrl}

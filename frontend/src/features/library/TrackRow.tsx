@@ -1,8 +1,9 @@
-import { Play, X } from 'lucide-react';
+import { Check, Play, X } from 'lucide-react';
 import { DurationText } from '@/components/media/DurationText';
 import { LikeButton } from '@/features/likes/LikeButton';
 import { PlayingIndicator } from '@/features/player/PlayingIndicator';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { useSelection } from '@/features/selection/selectionStore';
 import type { Track } from '@/types/api';
 import { TrackContextMenu } from './TrackContextMenu';
 import styles from './library.module.css';
@@ -27,6 +28,9 @@ export function TrackRow({
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
   const isActive = currentId === track.id;
+  const selActive = useSelection((s) => s.active);
+  const selected = useSelection((s) => s.ids.has(track.id));
+  const toggleSel = useSelection((s) => s.toggle);
 
   const onPlay = () => {
     if (source) setSource(source);
@@ -39,11 +43,17 @@ export function TrackRow({
 
   return (
     <div
-      className={`${styles.row} ${isActive ? styles.rowActive : ''}`}
-      onClick={onPlay}
+      className={`${styles.row} ${isActive ? styles.rowActive : ''} ${selected ? styles.rowSelected : ''}`}
+      onClick={selActive ? () => toggleSel(track.id) : onPlay}
     >
       <div className={styles.rowNum}>
-        {isActive ? (
+        {selActive ? (
+          <span
+            className={`${styles.checkbox} ${selected ? styles.checkboxOn : ''}`}
+          >
+            {selected && <Check size={12} />}
+          </span>
+        ) : isActive ? (
           isPlaying ? (
             <PlayingIndicator />
           ) : (

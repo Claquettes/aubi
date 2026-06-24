@@ -10,6 +10,7 @@ import { DetailHero } from '@/features/library/DetailHero';
 import { PlaylistTrackList } from '@/features/playlists/PlaylistTrackList';
 import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 import styles from './PlaylistPage.module.css';
 
@@ -23,6 +24,7 @@ export function PlaylistPage() {
     enabled: !!id,
   });
   const accent = useCoverColor(pl?.coverUrl);
+  usePageTheme(pl?.coverUrl);
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
 
@@ -43,10 +45,7 @@ export function PlaylistPage() {
   };
 
   return (
-    <div
-      className="page-enter"
-      style={accent ? ({ '--color-accent': accent } as CSSProperties) : undefined}
-    >
+    <div className="page-enter">
       <DetailHero
         accent={accent}
         coverUrl={pl.coverUrl}

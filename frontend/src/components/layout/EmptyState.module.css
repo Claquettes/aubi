@@ -1,0 +1,28 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: var(--space-16) var(--space-4);
+  max-width: 46ch;
+  margin-inline: auto;
+}
+
+.mark {
+  font-family: var(--font-display);
+  font-size: var(--step-6);
+  line-height: 1;
+  color: color-mix(in oklab, var(--art-action, var(--color-accent)) 60%, var(--color-ink-muted));
+  opacity: 0.7;
+}
+
+.text {
+  font-family: var(--font-display);
+  font-weight: var(--weight-regular);
+  font-size: var(--step-2);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink-soft);
+  overflow-wrap: anywhere;
+}
