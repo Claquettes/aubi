@@ -6,9 +6,11 @@ import {
   forceManyBody,
   forceSimulation,
 } from 'd3-force';
+import type { SimulationLinkDatum, SimulationNodeDatum } from 'd3-force';
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as RPointerEvent, WheelEvent as RWheelEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Locate, Minus, Plus } from 'lucide-react';
 import { graphApi } from '@/api/graph';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/layout/EmptyState';
@@ -25,6 +27,14 @@ interface N {
 interface L {
   s: N;
   t: N;
+  weight: number;
+}
+interface SimNode extends SimulationNodeDatum {
+  id: string;
+  name: string;
+  trackCount: number;
+}
+interface SimLink extends SimulationLinkDatum<SimNode> {
   weight: number;
 }
 
@@ -45,6 +55,7 @@ export function GraphPage() {
   const pan = useRef<{ px: number; py: number; ox: number; oy: number } | null>(
     null,
   );
+  const fit = useRef({ x: 0, y: 0, k: 1 });
 
   useEffect(() => {
     if (!data || !data.nodes.length) {
@@ -52,29 +63,29 @@ export function GraphPage() {
       setLinks([]);
       return;
     }
-    const ns = data.nodes.map((n) => ({
+    const ns: SimNode[] = data.nodes.map((n) => ({
       ...n,
       x: (Math.random() - 0.5) * 400,
       y: (Math.random() - 0.5) * 400,
     }));
-    const ls = data.edges.map((e) => ({
+    const ls: SimLink[] = data.edges.map((e) => ({
       source: e.source,
       target: e.target,
       weight: e.weight,
     }));
-    const sim = forceSimulation(ns as never[])
+    const sim = forceSimulation<SimNode>(ns)
       .force(
         'link',
-        forceLink(ls as never[])
-          .id((d: never) => (d as N).id)
-          .distance((l: never) => 100 - Math.min((l as L).weight, 8) * 6)
+        forceLink<SimNode, SimLink>(ls)
+          .id((d) => d.id)
+          .distance((l) => 100 - Math.min(l.weight, 8) * 6)
           .strength(0.6),
       )
-      .force('charge', forceManyBody().strength(-280))
-      .force('center', forceCenter(0, 0))
+      .force('charge', forceManyBody<SimNode>().strength(-280))
+      .force('center', forceCenter<SimNode>(0, 0))
       .force(
         'collide',
-        forceCollide().radius((d: never) => radius((d as N).trackCount) + 10),
+        forceCollide<SimNode>().radius((d) => radius(d.trackCount) + 10),
       )
       .stop();
     for (let i = 0; i < 320; i++) sim.tick();
@@ -85,8 +96,8 @@ export function GraphPage() {
         id: n.id,
         name: n.name,
         trackCount: n.trackCount,
-        x: n.x,
-        y: n.y,
+        x: n.x ?? 0,
+        y: n.y ?? 0,
       })),
     );
     setLinks(
@@ -100,7 +111,24 @@ export function GraphPage() {
         })
         .filter((l): l is L => !!l.s && !!l.t),
     );
-    setT({ x: 0, y: 0, k: 1 });
+    // Ajuste la vue à l'étendue réelle des nœuds (sinon ils débordent du viewBox).
+    const xs = ns.map((n) => n.x ?? 0);
+    const ys = ns.map((n) => n.y ?? 0);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const k = Math.min(
+      820 / Math.max(maxX - minX, 1),
+      560 / Math.max(maxY - minY, 1),
+      1.4,
+    );
+    fit.current = {
+      x: -((minX + maxX) / 2) * k,
+      y: -((minY + maxY) / 2) * k,
+      k,
+    };
+    setT(fit.current);
   }, [data]);
 
   if (isLoading)
@@ -139,6 +167,9 @@ export function GraphPage() {
   const onUp = () => {
     pan.current = null;
   };
+  const zoomBy = (f: number) =>
+    setT((p) => ({ ...p, k: Math.max(0.3, Math.min(4, p.k * f)) }));
+  const recenter = () => setT(fit.current);
 
   return (
     <div>
@@ -156,6 +187,17 @@ export function GraphPage() {
         onPointerUp={onUp}
         onPointerLeave={onUp}
       >
+        <div className={styles.toolbar}>
+          <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoomer">
+            <Plus size={18} />
+          </button>
+          <button type="button" onClick={() => zoomBy(0.8)} aria-label="Dézoomer">
+            <Minus size={18} />
+          </button>
+          <button type="button" onClick={recenter} aria-label="Recentrer la vue">
+            <Locate size={18} />
+          </button>
+        </div>
         <svg
           className={styles.svg}
           viewBox="-450 -320 900 640"

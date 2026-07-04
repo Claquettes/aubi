@@ -1,4 +1,4 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import type { ElementType, HTMLAttributes, ReactNode } from 'react';
 import styles from './Text.module.css';
 
 type Size = '2xs' | 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl';
@@ -28,7 +28,7 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
 }
 
 export function Text({
-  as: Tag = 'span' as HtmlTag,
+  as: Tag = 'span' as ElementType,
   size = 'base',
   weight = 'regular',
   color = 'primary',

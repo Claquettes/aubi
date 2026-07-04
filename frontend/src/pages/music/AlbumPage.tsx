@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { type CSSProperties, useState } from 'react';
+import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { albumsApi } from '@/api/albums';

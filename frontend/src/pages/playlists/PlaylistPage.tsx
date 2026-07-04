@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
-import type { CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { playlistsApi } from '@/api/playlists';
 import { DurationText } from '@/components/media/DurationText';

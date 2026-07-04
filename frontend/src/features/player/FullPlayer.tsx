@@ -34,21 +34,23 @@ export function FullPlayer() {
         </button>
       </header>
 
-      <div className={styles.fullArt}>
-        <CoverArt src={track.coverUrl} label={track.title} size="xl" />
-      </div>
-
-      <div className={styles.fullTitleRow}>
-        <div style={{ minWidth: 0 }}>
-          <h2 className={styles.fullTitle}>{track.title}</h2>
-          <p className={styles.fullArtist}>{track.artist?.name ?? '—'}</p>
+      <div className={styles.fullStage}>
+        <div className={styles.fullArt}>
+          <CoverArt src={track.coverUrl} label={track.title} size="fill" />
         </div>
-        <LikeButton track={track} size={22} />
+        <div className={styles.fullMain}>
+          <div className={styles.fullTitleRow}>
+            <div style={{ minWidth: 0 }}>
+              <h2 className={styles.fullTitle}>{track.title}</h2>
+              <p className={styles.fullArtist}>{track.artist?.name ?? '—'}</p>
+            </div>
+            <LikeButton track={track} size={22} />
+          </div>
+          <PlayerProgress />
+          <PlayerControls size="lg" />
+          <VolumeControl />
+        </div>
       </div>
-
-      <PlayerProgress />
-      <PlayerControls size="lg" />
-      <VolumeControl />
 
       <QueueDrawer />
     </div>

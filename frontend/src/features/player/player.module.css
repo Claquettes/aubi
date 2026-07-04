@@ -22,17 +22,18 @@
   color: var(--color-playing);
 }
 .playBtn {
-  background: var(--color-playing);
-  color: var(--color-on-accent);
+  background: var(--art-action, var(--color-accent));
+  color: var(--art-action-ink, var(--color-canvas));
   border: none;
   cursor: pointer;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-full);
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-round);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform var(--duration-fast) var(--ease-default);
+  box-shadow: var(--shadow-paper-1);
+  transition: transform var(--duration-fast) var(--ease-spring);
 }
 .playBtn:hover {
   transform: scale(1.05);
@@ -53,9 +54,9 @@
 }
 .progressTrack {
   flex: 1;
-  height: 4px;
-  background: var(--color-bg-subtle);
-  border-radius: var(--radius-full);
+  height: 6px;
+  background: var(--color-hairline);
+  border-radius: var(--radius-round);
   cursor: pointer;
   position: relative;
 }
@@ -104,23 +105,34 @@
   z-index: var(--z-modal);
   background:
     radial-gradient(
-      130% 55% at 50% 0%,
-      color-mix(in srgb, var(--color-playing) 38%, transparent),
-      transparent 62%
+      130% 60% at 50% 0%,
+      color-mix(in oklab, var(--art-primary, var(--color-accent)) 44%, transparent),
+      transparent 60%
     ),
-    var(--color-bg-base);
+    radial-gradient(
+      90% 50% at 80% 8%,
+      color-mix(in oklab, var(--art-secondary, var(--color-accent)) 22%, transparent),
+      transparent 55%
+    ),
+    var(--color-canvas);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
   padding: calc(var(--space-6) + env(safe-area-inset-top, 0px)) var(--space-6)
     calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
-  max-width: 480px;
+  max-width: 520px;
   margin: 0 auto;
-  animation: fadeInUp var(--duration-base) var(--ease-default);
+  animation: fadeInUp var(--duration-medium) var(--ease-standard);
+}
+@media (min-width: 1024px) {
+  .full {
+    max-width: 1000px;
+    gap: var(--space-8);
+  }
 }
 .fullArt > * {
-  box-shadow: var(--shadow-lg);
-  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-paper-2);
+  border-radius: var(--radius-md);
 }
 .fullHead {
   display: flex;
@@ -147,12 +159,40 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.fullArt {
+.fullStage {
   flex: 1;
+  min-height: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 0;
+  gap: var(--space-6);
+  width: 100%;
+}
+.fullArt {
+  flex-shrink: 0;
+  width: min(78vw, 360px);
+  max-width: 46vh;
+}
+.fullMain {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+@media (min-width: 1024px) {
+  .fullStage {
+    flex-direction: row;
+    gap: var(--space-12);
+  }
+  .fullArt {
+    width: clamp(320px, 32vw, 480px);
+    max-width: none;
+  }
+  .fullMain {
+    flex: 1;
+    max-width: 460px;
+  }
 }
 .fullTitleRow {
   display: flex;

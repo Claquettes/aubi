@@ -1,49 +1,57 @@
 .card {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  margin-bottom: var(--space-4);
-  max-width: 560px;
+  border-top: 1px solid var(--color-hairline);
+  padding: var(--space-8) 0;
+  max-width: 920px;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   align-items: flex-start;
 }
+@media (min-width: 1024px) {
+  .card {
+    padding: var(--space-10) 0;
+  }
+}
 .cardTitle {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
-  color: var(--color-text-primary);
+  font-weight: var(--weight-semibold);
+  font-size: var(--step-3);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink);
 }
 .info {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  font-size: var(--step-0);
+  color: var(--color-ink-soft);
   line-height: var(--leading-normal);
+  max-width: 62ch;
 }
 .error {
-  font-size: var(--text-sm);
-  color: var(--color-like);
+  font-size: var(--step-0);
+  color: var(--color-danger);
 }
 .progressRow {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
+  max-width: 480px;
 }
 .progressTrack {
   flex: 1;
   height: 6px;
-  background: var(--color-bg-subtle);
-  border-radius: var(--radius-full);
+  background: var(--color-hairline);
+  border-radius: var(--radius-round);
   overflow: hidden;
 }
 .progressFill {
   height: 100%;
-  background: var(--color-accent);
-  transition: width var(--duration-base) var(--ease-default);
+  background: var(--art-action, var(--color-accent));
+  transition: width var(--duration-medium) var(--ease-standard);
 }
 .progressPct {
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
   font-variant-numeric: tabular-nums;
+  min-width: 40px;
+  text-align: right;
 }

@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import type { CSSProperties } from 'react';
 import { useParams } from 'react-router-dom';
 import { concertsApi } from '@/api/concerts';
 import { DurationText } from '@/components/media/DurationText';

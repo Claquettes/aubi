@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import type { CSSProperties } from 'react';
 import { audiobooksApi } from '@/api/audiobooks';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
