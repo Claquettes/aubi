@@ -14,6 +14,8 @@ export interface ArtistsQuery {
   sort?: string;
   order?: 'asc' | 'desc';
   isLiked?: boolean;
+  minTracks?: number;
+  maxTracks?: number;
   page?: number;
   limit?: number;
 }

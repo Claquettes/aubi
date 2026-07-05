@@ -5,6 +5,7 @@ import { Grid } from '@/components/layout/Grid';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
 import { AlbumCard } from '@/features/library/AlbumCard';
+import { TrackRow } from '@/features/library/TrackRow';
 import { DetailHero } from '@/features/library/DetailHero';
 import { EntityLikeButton } from '@/features/likes/EntityLikeButton';
 import { usePageTheme } from '@/hooks/appTheme';
@@ -25,6 +26,7 @@ export function ArtistPage() {
   if (!artist) return <EmptyState>Artiste introuvable.</EmptyState>;
 
   const albums = artist.albums ?? [];
+  const tracks = artist.tracks ?? [];
 
   return (
     <div className="page-enter">
@@ -37,8 +39,12 @@ export function ArtistPage() {
         title={artist.name}
         subtitle={
           <>
-            {artist.albumCount} album{artist.albumCount > 1 ? 's' : ''} ·{' '}
-            {artist.trackCount} titres
+            {albums.length > 0 && (
+              <>
+                {albums.length} album{albums.length > 1 ? 's' : ''} ·{' '}
+              </>
+            )}
+            {artist.trackCount} titre{artist.trackCount > 1 ? 's' : ''}
           </>
         }
         actions={
@@ -50,15 +56,38 @@ export function ArtistPage() {
           />
         }
       />
-      <h2 className={styles.sectionTitle}>Albums</h2>
-      {albums.length ? (
-        <Grid>
-          {albums.map((a) => (
-            <AlbumCard key={a.id} album={a} />
-          ))}
-        </Grid>
-      ) : (
-        <EmptyState>Aucun album.</EmptyState>
+
+      {albums.length > 0 && (
+        <>
+          <h2 className={styles.sectionTitle}>Albums</h2>
+          <Grid>
+            {albums.map((a) => (
+              <AlbumCard key={a.id} album={a} />
+            ))}
+          </Grid>
+        </>
+      )}
+
+      {tracks.length > 0 && (
+        <>
+          <h2 className={styles.sectionTitle}>Titres</h2>
+          <div>
+            {tracks.map((t, i) => (
+              <TrackRow
+                key={t.id}
+                track={t}
+                index={i}
+                queue={tracks}
+                source={`artist:${artist.id}`}
+                showNumber={false}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {albums.length === 0 && tracks.length === 0 && (
+        <EmptyState>Aucun contenu pour cet artiste.</EmptyState>
       )}
     </div>
   );

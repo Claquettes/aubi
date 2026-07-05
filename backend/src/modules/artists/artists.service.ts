@@ -54,6 +54,18 @@ export class ArtistsService {
         'EXISTS (SELECT 1 FROM artist_likes al WHERE al.artist_id = ar.id)',
       );
     }
+    // Bornes sur le nombre de titres (grille principale ≥ 2 ; Artistes Divers = 1).
+    const trackCountSub = `(SELECT COUNT(DISTINCT t.id) FROM track_artists ta JOIN tracks t ON t.id = ta.track_id WHERE ta.artist_id = ar.id AND t.deleted_at IS NULL)`;
+    if (query.minTracks != null) {
+      qb.andWhere(`${trackCountSub} >= :minTracks`, {
+        minTracks: query.minTracks,
+      });
+    }
+    if (query.maxTracks != null) {
+      qb.andWhere(`${trackCountSub} <= :maxTracks`, {
+        maxTracks: query.maxTracks,
+      });
+    }
     const sort =
       query.sort === 'name' ? 'ar.name' : 'ar.createdAt';
     const order = query.order === 'desc' ? 'DESC' : 'ASC';
@@ -150,11 +162,19 @@ export class ArtistsService {
        FROM track_artists ta
        JOIN tracks t ON t.id = ta.track_id AND t.deleted_at IS NULL
        JOIN albums al ON al.id = t.album_id
-       WHERE ta.artist_id = $1
+       WHERE ta.artist_id = $1 AND al.is_compilation = false
        ORDER BY al.created_at DESC
        LIMIT 200`,
       [id],
     );
+    // Titres « divers » : les titres de l'artiste rattachés à une compilation
+    // (dont « Titres divers »), présentés à part dans une section « Titres ».
+    const looseTracks = await this.tracksService.findAll({
+      artistId: id,
+      isCompilation: true,
+      page: 1,
+      limit: 300,
+    } as TracksQueryDto);
     return {
       id: a.id,
       name: a.name,
@@ -169,6 +189,7 @@ export class ArtistsService {
         year: al.year,
         coverUrl: `/api/v1/covers/${al.id}.jpg`,
       })),
+      tracks: looseTracks.data,
     };
   }
 

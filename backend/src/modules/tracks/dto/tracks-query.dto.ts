@@ -42,4 +42,10 @@ export class TracksQueryDto extends PaginationDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   isCover?: boolean;
+
+  // Filtre sur le caractère compilation de l'album du titre.
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isCompilation?: boolean;
 }

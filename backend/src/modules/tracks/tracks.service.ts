@@ -91,6 +91,9 @@ export class TracksService {
     if (query.albumId) {
       qb.andWhere('t.album_id = :albumId', { albumId: query.albumId });
     }
+    if (query.isCompilation !== undefined) {
+      qb.andWhere('album.is_compilation = :ac', { ac: query.isCompilation });
+    }
     if (query.concertId) {
       qb.andWhere('t.concert_id = :concertId', { concertId: query.concertId });
     }
@@ -119,10 +122,10 @@ export class TracksService {
       query.sort === 'title'
         ? 't.title'
         : query.sort === 'duration'
-          ? 't.duration_ms'
+          ? 't.durationMs'
           : query.sort === 'trackNumber'
-            ? 't.track_number'
-            : 't.created_at';
+            ? 't.trackNumber'
+            : 't.createdAt';
     const order = query.order === 'asc' ? 'ASC' : 'DESC';
     qb.orderBy(sortCol, order).addOrderBy('t.id', 'ASC');
 

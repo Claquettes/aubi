@@ -54,6 +54,7 @@ export interface Artist {
 
 export interface ArtistDetail extends Artist {
   albums: Album[];
+  tracks: Track[];
 }
 
 export interface Concert {

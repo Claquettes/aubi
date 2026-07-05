@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { albumsApi } from '@/api/albums';
 import { DurationText } from '@/components/media/DurationText';
 import { EmptyState } from '@/components/layout/EmptyState';
@@ -49,7 +49,18 @@ export function AlbumPage() {
         title={album.title}
         subtitle={
           <>
-            {album.isCompilation ? 'Artistes variés' : (album.artist?.name ?? '—')}
+            {album.isCompilation ? (
+              'Artistes variés'
+            ) : album.artist ? (
+              <Link
+                to={`/music/artists/${album.artist.id}`}
+                style={{ color: 'inherit', textDecoration: 'underline', textUnderlineOffset: '3px' }}
+              >
+                {album.artist.name}
+              </Link>
+            ) : (
+              '—'
+            )}
             {!album.isCompilation && album.year ? ` · ${album.year}` : ''} ·{' '}
             {album.trackCount} titres · <DurationText ms={album.durationMs} />
           </>

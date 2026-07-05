@@ -46,6 +46,16 @@
   transform: translateY(-1px);
 }
 
+/* Carte spéciale « Artistes divers » (icône sur papier). */
+.diversCover {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper-high);
+  color: var(--color-ink-muted);
+}
+
 .collectionBadge {
   position: absolute;
   z-index: 2;
@@ -206,6 +216,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-top: 2px;
+}
+.subLink {
+  color: inherit;
+  text-decoration: none;
+}
+.subLink:hover {
+  color: var(--art-action, var(--color-accent));
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 .rowActive {
   background: color-mix(

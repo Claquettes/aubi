@@ -1,4 +1,5 @@
 import { Check, Play, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { DurationText } from '@/components/media/DurationText';
 import { LikeButton } from '@/features/likes/LikeButton';
 import { PlayingIndicator } from '@/features/player/PlayingIndicator';
@@ -68,7 +69,17 @@ export function TrackRow({
       <div className={styles.rowMain}>
         <div className={styles.rowTitle}>{track.title}</div>
         <div className={styles.rowSub}>
-          {track.artist?.name ?? '—'}
+          {track.artist ? (
+            <Link
+              to={`/music/artists/${track.artist.id}`}
+              className={styles.subLink}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {track.artist.name}
+            </Link>
+          ) : (
+            '—'
+          )}
           {track.isCover ? ' · reprise' : ''}
         </div>
       </div>

@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { CheckSquare, MoreHorizontal, Pencil, Plus } from 'lucide-react';
+import {
+  CheckSquare,
+  ListPlus,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+} from 'lucide-react';
 import { Modal } from '@/components/primitives/Modal';
+import { useToast } from '@/components/feedback/Toast';
 import { AddToPlaylistModal } from '@/features/playlists/AddToPlaylistModal';
 import { EditTrackModal } from '@/features/metadata/EditTrackModal';
+import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { useSelection } from '@/features/selection/selectionStore';
 import type { Track } from '@/types/api';
 
@@ -27,6 +35,8 @@ export function TrackContextMenu({ track }: { track: Track }) {
   const [addPl, setAddPl] = useState(false);
   const [edit, setEdit] = useState(false);
   const enterSelection = useSelection((s) => s.enter);
+  const addToQueue = usePlayerStore((s) => s.addToQueue);
+  const toast = useToast();
 
   return (
     <>
@@ -51,6 +61,17 @@ export function TrackContextMenu({ track }: { track: Track }) {
 
       {menu && (
         <Modal title={track.title} onClose={() => setMenu(false)}>
+          <button
+            type="button"
+            style={itemStyle}
+            onClick={() => {
+              setMenu(false);
+              addToQueue(track);
+              toast("Ajouté à la file d'attente");
+            }}
+          >
+            <ListPlus size={18} /> Ajouter à la file d'attente
+          </button>
           <button
             type="button"
             style={itemStyle}
