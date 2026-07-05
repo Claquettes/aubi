@@ -32,6 +32,9 @@ export interface PlayerState {
   clearSeek: () => void;
   setFullPlayerOpen: (open: boolean) => void;
   setQueueOpen: (open: boolean) => void;
+  addToQueue: (tracks: Track | Track[]) => void;
+  moveInQueue: (from: number, to: number) => void;
+  removeFromQueue: (index: number) => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -129,4 +132,51 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setFullPlayerOpen: (fullPlayerOpen) => set({ fullPlayerOpen }),
   setQueueOpen: (queueOpen) => set({ queueOpen }),
+
+  addToQueue: (tracks) => {
+    const add = Array.isArray(tracks) ? tracks : [tracks];
+    if (!add.length) return;
+    const { queue, currentTrack } = get();
+    if (!currentTrack) {
+      // Rien en lecture : on démarre le premier titre ajouté.
+      set({
+        currentTrack: add[0],
+        queue: add,
+        queueIndex: 0,
+        isPlaying: true,
+        progress: 0,
+        currentTimeMs: 0,
+      });
+    } else {
+      set({ queue: [...queue, ...add] });
+    }
+  },
+
+  moveInQueue: (from, to) => {
+    const { queue, queueIndex } = get();
+    if (
+      from === to ||
+      from < 0 ||
+      to < 0 ||
+      from >= queue.length ||
+      to >= queue.length
+    )
+      return;
+    const q = [...queue];
+    const [moved] = q.splice(from, 1);
+    q.splice(to, 0, moved);
+    let idx = queueIndex;
+    if (from === queueIndex) idx = to;
+    else if (from < queueIndex && to >= queueIndex) idx = queueIndex - 1;
+    else if (from > queueIndex && to <= queueIndex) idx = queueIndex + 1;
+    set({ queue: q, queueIndex: idx });
+  },
+
+  removeFromQueue: (index) => {
+    const { queue, queueIndex } = get();
+    if (index < 0 || index >= queue.length || index === queueIndex) return;
+    const q = queue.filter((_, i) => i !== index);
+    const idx = index < queueIndex ? queueIndex - 1 : queueIndex;
+    set({ queue: q, queueIndex: idx });
+  },
 }));

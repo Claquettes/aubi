@@ -103,18 +103,8 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  background:
-    radial-gradient(
-      130% 60% at 50% 0%,
-      color-mix(in oklab, var(--art-primary, var(--color-accent)) 44%, transparent),
-      transparent 60%
-    ),
-    radial-gradient(
-      90% 50% at 80% 8%,
-      color-mix(in oklab, var(--art-secondary, var(--color-accent)) 22%, transparent),
-      transparent 55%
-    ),
-    var(--color-canvas);
+  background: var(--color-canvas);
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -128,6 +118,47 @@
   .full {
     max-width: 1000px;
     gap: var(--space-8);
+  }
+}
+/* Fond immersif entièrement teinté par la pochette, doucement animé. */
+.full::before {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  z-index: -1;
+  background:
+    radial-gradient(
+      42% 52% at 22% 20%,
+      color-mix(in oklab, var(--art-primary, var(--color-accent)) 60%, var(--color-canvas)),
+      transparent 72%
+    ),
+    radial-gradient(
+      48% 54% at 82% 26%,
+      color-mix(in oklab, var(--art-secondary, var(--color-accent)) 52%, var(--color-canvas)),
+      transparent 70%
+    ),
+    radial-gradient(
+      58% 62% at 50% 98%,
+      color-mix(in oklab, var(--art-tertiary, var(--art-primary, var(--color-accent))) 46%, var(--color-canvas)),
+      transparent 76%
+    ),
+    var(--color-canvas);
+  animation: playerFlow 20s var(--ease-standard) infinite alternate;
+}
+@keyframes playerFlow {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1.06);
+  }
+  50% {
+    transform: translate3d(3%, 2%, 0) scale(1.14);
+  }
+  100% {
+    transform: translate3d(-2%, 3%, 0) scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .full::before {
+    animation: none;
   }
 }
 .fullArt > * {
@@ -281,19 +312,53 @@
 .queueItem {
   display: flex;
   align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+.queueItem:hover {
+  background: color-mix(in oklab, var(--color-ink) 5%, transparent);
+}
+.queueOver {
+  box-shadow: inset 0 2px 0 var(--art-action, var(--color-accent));
+}
+.queueGrip {
+  color: var(--color-ink-muted);
+  cursor: grab;
+  display: flex;
+  flex-shrink: 0;
+}
+.queueGrip:active {
+  cursor: grabbing;
+}
+.queuePlay {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2);
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
-  border-radius: var(--radius-base);
+  padding: 0;
+  color: inherit;
 }
-.queueItem:hover {
-  background: var(--color-bg-overlay);
+.queueRemove {
+  background: none;
+  border: none;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  display: flex;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.queueRemove:hover {
+  color: var(--color-ink);
 }
 .queueActive .queueTitle {
-  color: var(--color-playing);
+  color: var(--art-action, var(--color-accent));
 }
 .queueMeta {
   min-width: 0;

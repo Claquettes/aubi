@@ -51,18 +51,18 @@
   /* ── Couleurs dérivées de la pochette (posées par appTheme, sinon accent) ── */
   --surface-dynamic: color-mix(
     in oklab,
-    var(--color-paper-raised) 84%,
-    var(--art-primary, var(--color-accent)) 16%
+    var(--color-paper-raised) 74%,
+    var(--art-primary, var(--color-accent)) 26%
   );
   --surface-dynamic-strong: color-mix(
     in oklab,
-    var(--color-paper-raised) 68%,
-    var(--art-primary, var(--color-accent)) 32%
+    var(--color-paper-raised) 54%,
+    var(--art-primary, var(--color-accent)) 46%
   );
   --border-dynamic: color-mix(
     in oklab,
-    var(--color-hairline-strong) 70%,
-    var(--art-secondary, var(--color-accent)) 30%
+    var(--color-hairline-strong) 56%,
+    var(--art-secondary, var(--color-accent)) 44%
   );
 
   /* ── Typographie ── */

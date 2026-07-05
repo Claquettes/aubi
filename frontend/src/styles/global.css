@@ -57,6 +57,22 @@
     opacity: var(--paper-noise-opacity);
   }
 
+  /* Teinte globale : toute l'app prend la couleur de la pochette active
+     (album consulté / titre en cours). Transparente quand aucune n'est active. */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      125% 85% at 50% -8%,
+      color-mix(in oklab, var(--art-primary, transparent) 16%, transparent),
+      transparent 58%
+    );
+    transition: background var(--duration-theme) var(--ease-standard);
+  }
+
   #root {
     position: relative;
     z-index: 1;
