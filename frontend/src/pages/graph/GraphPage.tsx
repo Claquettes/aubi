@@ -10,7 +10,7 @@ import type { SimulationLinkDatum, SimulationNodeDatum } from 'd3-force';
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as RPointerEvent, WheelEvent as RWheelEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Locate, Minus, Plus } from 'lucide-react';
+import { Locate, Minus, Plus, Search, X } from 'lucide-react';
 import { graphApi } from '@/api/graph';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/layout/EmptyState';
@@ -52,6 +52,7 @@ export function GraphPage() {
   const [links, setLinks] = useState<L[]>([]);
   const [t, setT] = useState({ x: 0, y: 0, k: 1 });
   const [hover, setHover] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   const pan = useRef<{ px: number; py: number; ox: number; oy: number } | null>(
     null,
   );
@@ -171,6 +172,29 @@ export function GraphPage() {
     setT((p) => ({ ...p, k: Math.max(0.3, Math.min(4, p.k * f)) }));
   const recenter = () => setT(fit.current);
 
+  const q = query.trim().toLowerCase();
+  const matchedIds = new Set(
+    q
+      ? nodes.filter((n) => n.name.toLowerCase().includes(q)).map((n) => n.id)
+      : [],
+  );
+  const centerOn = (node: N) => {
+    const k = Math.max(t.k, 1.5);
+    setT({ x: -node.x * k, y: -node.y * k, k });
+  };
+  const focusMatch = (value: string) => {
+    const qq = value.trim().toLowerCase();
+    if (!qq) return;
+    const matches = nodes.filter((n) => n.name.toLowerCase().includes(qq));
+    if (!matches.length) return;
+    const best = [...matches].sort((a, b) => {
+      const sa = a.name.toLowerCase().startsWith(qq) ? 0 : 1;
+      const sb = b.name.toLowerCase().startsWith(qq) ? 0 : 1;
+      return sa - sb || a.name.length - b.name.length;
+    })[0];
+    centerOn(best);
+  };
+
   return (
     <div>
       <PageHeader title="Graphe" />
@@ -179,6 +203,36 @@ export function GraphPage() {
         collaboration. Touche un point pour l'ouvrir · glisse pour déplacer ·
         molette pour zoomer.
       </p>
+      <div className={styles.searchBar}>
+        <Search size={16} className={styles.searchIcon} />
+        <input
+          className={styles.searchInput}
+          placeholder="Rechercher un artiste dans le graphe…"
+          value={query}
+          onChange={(e) => {
+            const v = e.target.value;
+            setQuery(v);
+            const qq = v.trim().toLowerCase();
+            const m = qq
+              ? nodes.filter((n) => n.name.toLowerCase().includes(qq))
+              : [];
+            if (m.length === 1) centerOn(m[0]);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') focusMatch(query);
+          }}
+        />
+        {query && (
+          <button
+            type="button"
+            className={styles.searchClear}
+            onClick={() => setQuery('')}
+            aria-label="Effacer la recherche"
+          >
+            <X size={15} />
+          </button>
+        )}
+      </div>
       <div
         className={styles.canvas}
         onWheel={onWheel}
@@ -214,17 +268,22 @@ export function GraphPage() {
                 className={styles.edge}
                 style={{
                   strokeWidth: Math.min(1 + l.weight * 0.4, 4),
-                  opacity: hover
-                    ? l.s.id === hover || l.t.id === hover
-                      ? 0.9
-                      : 0.08
-                    : 0.32,
+                  opacity: q
+                    ? matchedIds.has(l.s.id) || matchedIds.has(l.t.id)
+                      ? 0.55
+                      : 0.04
+                    : hover
+                      ? l.s.id === hover || l.t.id === hover
+                        ? 0.9
+                        : 0.08
+                      : 0.32,
                 }}
               />
             ))}
             {nodes.map((n) => {
               const r = radius(n.trackCount);
               const active = hover === n.id;
+              const matched = matchedIds.has(n.id);
               return (
                 <g
                   key={n.id}
@@ -234,15 +293,27 @@ export function GraphPage() {
                   onPointerEnter={() => setHover(n.id)}
                   onPointerLeave={() => setHover(null)}
                 >
+                  {(active || matched) && (
+                    <circle r={r + 4} className={styles.ring} />
+                  )}
                   <circle
                     r={r}
                     className={styles.dot}
-                    style={{ opacity: hover && !active ? 0.35 : 1 }}
+                    style={{
+                      opacity: q ? (matched ? 1 : 0.12) : hover && !active ? 0.35 : 1,
+                    }}
                   />
                   <text
                     y={r + 12}
                     className={styles.label}
-                    style={{ opacity: active || t.k > 1.3 ? 1 : 0.7 }}
+                    style={{
+                      opacity:
+                        matched || active || (!q && t.k > 1.3)
+                          ? 1
+                          : q
+                            ? 0.1
+                            : 0.7,
+                    }}
                   >
                     {n.name.length > 18 ? `${n.name.slice(0, 17)}…` : n.name}
                   </text>

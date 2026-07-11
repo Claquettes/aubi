@@ -1,9 +1,59 @@
 .hint {
   font-size: var(--step-0);
   color: var(--color-ink-soft);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
   max-width: 62ch;
   line-height: var(--leading-normal);
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 420px;
+  height: 44px;
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-3);
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  color: var(--color-ink-muted);
+}
+.searchBar:focus-within {
+  border-color: transparent;
+  box-shadow: var(--focus-ring);
+}
+.searchIcon {
+  flex-shrink: 0;
+}
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+}
+.searchInput::placeholder {
+  color: var(--color-ink-muted);
+}
+.searchClear {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  display: flex;
+}
+.searchClear:hover {
+  color: var(--color-ink);
+}
+.ring {
+  fill: none;
+  stroke: var(--art-action, var(--color-accent));
+  stroke-width: 2.5;
 }
 .canvas {
   position: relative;
