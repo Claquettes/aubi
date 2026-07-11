@@ -66,9 +66,9 @@
     z-index: 0;
     pointer-events: none;
     background: radial-gradient(
-      125% 85% at 50% -8%,
-      color-mix(in oklab, var(--art-primary, transparent) 16%, transparent),
-      transparent 58%
+      135% 95% at 50% -10%,
+      color-mix(in oklab, var(--art-primary, transparent) 26%, transparent),
+      transparent 62%
     );
     transition: background var(--duration-theme) var(--ease-standard);
   }

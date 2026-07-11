@@ -48,18 +48,18 @@
   background:
     radial-gradient(
       120% 130% at 18% 0%,
-      color-mix(in oklab, var(--art-primary, var(--hero-accent, var(--color-accent))) 46%, transparent),
-      transparent 60%
+      color-mix(in oklab, var(--art-primary, var(--hero-accent, var(--color-accent))) 60%, transparent),
+      transparent 62%
     ),
     radial-gradient(
       95% 95% at 90% 6%,
-      color-mix(in oklab, var(--art-secondary, var(--color-accent)) 30%, transparent),
-      transparent 55%
+      color-mix(in oklab, var(--art-secondary, var(--color-accent)) 40%, transparent),
+      transparent 58%
     ),
     radial-gradient(
       80% 70% at 60% 100%,
-      color-mix(in oklab, var(--art-tertiary, var(--art-primary, var(--color-accent))) 20%, transparent),
-      transparent 60%
+      color-mix(in oklab, var(--art-tertiary, var(--art-primary, var(--color-accent))) 28%, transparent),
+      transparent 62%
     ),
     linear-gradient(180deg, transparent 46%, var(--color-canvas) 100%);
 }

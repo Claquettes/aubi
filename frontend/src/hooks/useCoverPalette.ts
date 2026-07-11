@@ -55,7 +55,7 @@ type RGB = [number, number, number];
 
 function buildTheme(img: HTMLImageElement): CoverTheme {
   const { primary, secondary, tertiary } = extractPalette(img);
-  const { action, ink } = correctAction(secondary, primary);
+  const { action, ink } = correctAction(secondary);
   return {
     '--art-primary': rgbToHex(primary),
     '--art-secondary': rgbToHex(secondary),
@@ -70,15 +70,16 @@ function buildTheme(img: HTMLImageElement): CoverTheme {
  * bornée (pas de fluo), puis contraste >= 4.5:1 garanti avec son encre
  * (blanc cassé ou presque-noir), en poussant la luminosité si nécessaire.
  */
-function correctAction(vibrant: RGB, fallback: RGB): { action: RGB; ink: RGB } {
+function correctAction(base: RGB): { action: RGB; ink: RGB } {
   const inkLight: RGB = [244, 237, 228];
   const inkDark: RGB = [24, 25, 38];
-  const src = saturation(vibrant) > 0.14 ? vibrant : fallback;
-  let [h, s, l] = rgbToHsl(src[0], src[1], src[2]);
-  s = Math.max(0.35, Math.min(s, 0.82));
+  let [h, s, l] = rgbToHsl(base[0], base[1], base[2]);
+  // Pas de plancher de saturation : une pochette N&B garde une action neutre,
+  // jamais recolorée par l'accent par défaut.
+  s = Math.min(s, 0.82);
   l = Math.max(0.42, Math.min(l, 0.72));
 
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 14; i++) {
     const action = hslToRgb(h, s, l);
     const la = relLum(action);
     const cLight = contrast(la, relLum(inkLight));
@@ -86,15 +87,16 @@ function correctAction(vibrant: RGB, fallback: RGB): { action: RGB; ink: RGB } {
     if (cLight >= 4.5 || cDark >= 4.5) {
       return { action, ink: cLight >= cDark ? inkLight : inkDark };
     }
-    // Contraste insuffisant : rapprocher d'une extrémité pour l'augmenter.
-    l = l <= 0.5 ? Math.max(0.3, l - 0.05) : Math.min(0.82, l + 0.05);
+    l = l <= 0.5 ? Math.max(0.28, l - 0.05) : Math.min(0.82, l + 0.05);
   }
   const action = hslToRgb(h, s, l);
   return {
     action,
-    ink: contrast(relLum(action), relLum(inkLight)) >= contrast(relLum(action), relLum(inkDark))
-      ? inkLight
-      : inkDark,
+    ink:
+      contrast(relLum(action), relLum(inkLight)) >=
+      contrast(relLum(action), relLum(inkDark))
+        ? inkLight
+        : inkDark,
   };
 }
 
@@ -103,7 +105,7 @@ function extractPalette(img: HTMLImageElement): {
   secondary: RGB;
   tertiary: RGB;
 } {
-  const size = 44;
+  const size = 48;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -114,15 +116,24 @@ function extractPalette(img: HTMLImageElement): {
 
   type Bin = { count: number; r: number; g: number; b: number; sat: number };
   const bins = new Map<number, Bin>();
+  let sr = 0;
+  let sg = 0;
+  let sb = 0;
+  let n = 0;
+  let satCount = 0;
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
     if (data[i + 3] < 128) continue;
-    const [, s, l] = rgbToHsl(r, g, b);
+    n += 1;
+    sr += r;
+    sg += g;
+    sb += b;
+    const [h, s, l] = rgbToHsl(r, g, b);
     if (l < 0.06 || l > 0.97) continue;
-    if (s < 0.1) continue;
-    const [h] = rgbToHsl(r, g, b);
+    if (s < 0.16) continue;
+    satCount += 1;
     const key = Math.round(h / 15) % 24;
     const bin = bins.get(key) ?? { count: 0, r: 0, g: 0, b: 0, sat: 0 };
     bin.count += 1;
@@ -133,36 +144,46 @@ function extractPalette(img: HTMLImageElement): {
     bins.set(key, bin);
   }
 
-  const list = [...bins.values()];
-  if (!list.length) {
-    return {
-      primary: [70, 68, 90],
-      secondary: [198, 160, 246],
-      tertiary: [138, 173, 244],
-    };
-  }
   const avg = (bin: Bin): RGB => [
     Math.round(bin.r / bin.count),
     Math.round(bin.g / bin.count),
     Math.round(bin.b / bin.count),
   ];
-  const vibrancy = (b: Bin) => (b.sat / b.count) * Math.log(b.count + 1);
-  const dominant = list.reduce((a, b) => (b.count > a.count ? b : a));
-  const byVibrancy = [...list].sort((a, b) => vibrancy(b) - vibrancy(a));
-  const secondary = byVibrancy[0] ?? dominant;
-  const tertiary =
-    byVibrancy.find((b) => b !== secondary && b !== dominant) ??
-    byVibrancy[1] ??
-    dominant;
-  return {
-    primary: avg(dominant),
-    secondary: avg(secondary),
-    tertiary: avg(tertiary),
-  };
-}
+  const list = [...bins.values()];
 
-function saturation(rgb: RGB): number {
-  return rgbToHsl(rgb[0], rgb[1], rgb[2])[1];
+  // Pochette colorée : palette par teintes dominantes.
+  if (n > 0 && satCount / n > 0.04 && list.length) {
+    const vibrancy = (b: Bin) => (b.sat / b.count) * Math.log(b.count + 1);
+    const dominant = list.reduce((a, b) => (b.count > a.count ? b : a));
+    const byVibrancy = [...list].sort((a, b) => vibrancy(b) - vibrancy(a));
+    const secondary = byVibrancy[0] ?? dominant;
+    const tertiary =
+      byVibrancy.find((b) => b !== secondary && b !== dominant) ??
+      byVibrancy[1] ??
+      dominant;
+    return {
+      primary: avg(dominant),
+      secondary: avg(secondary),
+      tertiary: avg(tertiary),
+    };
+  }
+
+  // Pochette monochrome (N&B) : palette NEUTRE dérivée de sa teinte moyenne,
+  // pas de repli sur la couleur d'accent par défaut.
+  if (n === 0) {
+    return {
+      primary: [56, 56, 68],
+      secondary: [150, 150, 165],
+      tertiary: [96, 96, 110],
+    };
+  }
+  const [mh, msRaw] = rgbToHsl(sr / n, sg / n, sb / n);
+  const ms = Math.min(msRaw, 0.14);
+  return {
+    primary: hslToRgb(mh, ms, 0.32),
+    secondary: hslToRgb(mh, ms, 0.68),
+    tertiary: hslToRgb(mh, ms, 0.5),
+  };
 }
 
 function relLum([r, g, b]: RGB): number {
