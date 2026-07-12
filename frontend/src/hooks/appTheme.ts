@@ -14,6 +14,16 @@ export const useThemeStore = create<ThemeState>((set) => ({
 }));
 
 const THEME_KEYS = [
+  '--color-canvas',
+  '--color-paper',
+  '--color-paper-raised',
+  '--color-paper-high',
+  '--color-ink',
+  '--color-ink-soft',
+  '--color-ink-muted',
+  '--color-hairline',
+  '--color-hairline-strong',
+  '--color-accent',
   '--art-primary',
   '--art-secondary',
   '--art-tertiary',

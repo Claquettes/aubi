@@ -55,13 +55,37 @@ type RGB = [number, number, number];
 
 function buildTheme(img: HTMLImageElement): CoverTheme {
   const { primary, secondary, tertiary } = extractPalette(img);
-  const { action, ink } = correctAction(secondary);
+  const { action, ink: actionInk } = correctAction(secondary);
+
+  // Teinte de thème = la plus saturée entre dominante et vibrante.
+  const pHsl = rgbToHsl(primary[0], primary[1], primary[2]);
+  const sHsl = rgbToHsl(secondary[0], secondary[1], secondary[2]);
+  const base = sHsl[1] >= pHsl[1] ? sHsl : pHsl;
+  const H = base[0];
+  const S = base[1];
+  const bgS = Math.min(S, 0.5); // saturation des fonds sombres
+  const inkS = Math.min(S, 0.28); // saturation (faible) des textes clairs
+  const hx = (h: number, s: number, l: number) => rgbToHex(hslToRgb(h, s, l));
+
+  // Toute la palette est dérivée de la pochette : fonds sombres teintés,
+  // textes/icônes clairs teintés (contraste AA garanti car fond sombre + texte
+  // clair), lignes teintées. Une pochette N&B donne des gris neutres.
   return {
+    '--color-canvas': hx(H, bgS * 0.9, 0.07),
+    '--color-paper': hx(H, bgS * 0.85, 0.105),
+    '--color-paper-raised': hx(H, bgS * 0.78, 0.15),
+    '--color-paper-high': hx(H, bgS * 0.7, 0.2),
+    '--color-ink': hx(H, inkS * 0.4, 0.95),
+    '--color-ink-soft': hx(H, inkS * 0.75, 0.8),
+    '--color-ink-muted': hx(H, inkS * 0.85, 0.64),
+    '--color-hairline': `color-mix(in oklab, ${hx(H, bgS, 0.5)} 40%, transparent)`,
+    '--color-hairline-strong': `color-mix(in oklab, ${hx(H, bgS, 0.6)} 52%, transparent)`,
+    '--color-accent': rgbToHex(action),
     '--art-primary': rgbToHex(primary),
     '--art-secondary': rgbToHex(secondary),
     '--art-tertiary': rgbToHex(tertiary),
     '--art-action': rgbToHex(action),
-    '--art-action-ink': rgbToHex(ink),
+    '--art-action-ink': rgbToHex(actionInk),
   };
 }
 
