@@ -1,19 +1,34 @@
+.center {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-12) 0;
+}
+
 .hint {
-  font-size: var(--step-0);
+  font-size: var(--step--1);
   color: var(--color-ink-soft);
   margin-bottom: var(--space-4);
-  max-width: 62ch;
+  max-width: 68ch;
   line-height: var(--leading-normal);
+}
+
+/* ─────────────────────────────── recherche ─────────────────────────────── */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
 .searchBar {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex: 1;
   max-width: 420px;
-  height: 44px;
+  height: 46px;
   padding: 0 var(--space-3);
-  margin-bottom: var(--space-3);
   background: var(--color-paper-raised);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
@@ -41,58 +56,105 @@
 }
 .searchClear {
   flex-shrink: 0;
+  display: flex;
   background: none;
   border: none;
+  padding: var(--space-1);
   color: var(--color-ink-muted);
   cursor: pointer;
-  display: flex;
 }
 .searchClear:hover {
   color: var(--color-ink);
 }
-.ring {
-  fill: none;
-  stroke: var(--art-action, var(--color-accent));
-  stroke-width: 2.5;
+
+.count {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  white-space: nowrap;
 }
-.canvas {
+
+.matchRow {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-2);
+  scrollbar-width: thin;
+}
+
+.chip {
+  flex-shrink: 0;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-round);
+  color: var(--color-ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.chip:hover {
+  color: var(--color-ink);
+  border-color: var(--art-action, var(--color-accent));
+}
+
+/* ──────────────────────────────── scène ────────────────────────────────── */
+
+.stage {
   position: relative;
   width: 100%;
-  height: min(72vh, 860px);
+  height: min(74vh, 820px);
   background:
     radial-gradient(
       120% 80% at 50% 0%,
-      color-mix(in oklab, var(--art-primary, var(--color-accent)) 10%, transparent),
+      color-mix(in oklab, var(--art-primary, var(--color-accent)) 12%, transparent),
       transparent 70%
     ),
     var(--color-paper);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-lg);
   overflow: hidden;
+}
+
+.canvasWrap {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
   touch-action: none;
   cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .canvas:active {
   cursor: grabbing;
 }
-.svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+
+/* ─────────────────────────────── outils ────────────────────────────────── */
 
 .toolbar {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
-  z-index: 2;
+  z-index: var(--z-above);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 .toolbar button {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -111,28 +173,143 @@
   background: var(--color-paper-raised);
 }
 
-.edge {
-  stroke: var(--color-ink-muted);
-  transition: opacity var(--duration-fast) var(--ease-standard);
+/* ───────────────────────── fiche artiste sélectionné ───────────────────── */
+
+.card {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  z-index: var(--z-above);
+  width: min(320px, calc(100% - var(--space-6)));
+  padding: var(--space-4);
+  background: var(--color-paper-high);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-paper-2);
 }
-.node {
+.cardClose {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  padding: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--color-ink-muted);
   cursor: pointer;
 }
-.dot {
-  fill: var(--art-action, var(--color-accent));
-  transition:
-    opacity var(--duration-fast) var(--ease-standard),
-    fill var(--duration-fast) var(--ease-standard);
+.cardClose:hover {
+  color: var(--color-ink);
 }
-.node:hover .dot {
-  fill: var(--art-secondary, var(--color-accent));
+.cardTitle {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--color-ink);
+  margin: 0 var(--space-6) var(--space-1) 0;
 }
-.label {
-  fill: var(--color-ink-soft);
-  font-size: 12px;
+.cardMeta {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  margin: 0 0 var(--space-3);
+}
+.cardChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  max-height: 84px;
+  overflow: hidden;
+}
+.cardChips .chip {
+  max-width: 138px;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--step--2);
+}
+.cardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--art-action, var(--color-accent));
+  color: var(--color-on-accent);
+  border: none;
+  border-radius: var(--radius-sm);
   font-family: var(--font-ui);
-  font-weight: var(--weight-medium);
-  text-anchor: middle;
-  pointer-events: none;
-  transition: opacity var(--duration-fast) var(--ease-standard);
+  font-size: var(--step--1);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.cardAction:hover {
+  filter: brightness(1.06);
+}
+
+.legend {
+  margin-top: var(--space-3);
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+}
+
+/* ───────────────────────────── plein écran ─────────────────────────────── */
+
+.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  padding-top: max(var(--space-3), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  background: var(--color-canvas);
+}
+.expanded .stage {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+.expanded .legend {
+  display: none;
+}
+
+/* ─────────────────────────────── mobile ────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .stage {
+    height: min(64svh, 620px);
+    border-radius: var(--radius-md);
+  }
+  .controls {
+    gap: var(--space-2);
+  }
+  .count {
+    font-size: var(--step--2);
+  }
+  /* Barre d'outils au pouce, pas sous le doigt qui explore. */
+  .toolbar {
+    top: auto;
+    bottom: var(--space-3);
+    right: var(--space-3);
+  }
+  .toolbar button {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--radius-md);
+  }
+  .card {
+    left: var(--space-3);
+    right: calc(var(--space-3) + 58px);
+    bottom: var(--space-3);
+    width: auto;
+    padding: var(--space-3);
+  }
+  .cardChips {
+    max-height: 64px;
+  }
+  .legend {
+    font-size: var(--step--2);
+    line-height: var(--leading-normal);
+  }
 }

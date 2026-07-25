@@ -1,328 +1,323 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  forceCenter,
-  forceCollide,
-  forceLink,
-  forceManyBody,
-  forceSimulation,
-} from 'd3-force';
-import type { SimulationLinkDatum, SimulationNodeDatum } from 'd3-force';
-import { useEffect, useRef, useState } from 'react';
-import type { PointerEvent as RPointerEvent, WheelEvent as RWheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Locate, Minus, Plus, Search, X } from 'lucide-react';
+import {
+  ArrowRight,
+  Locate,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react';
 import { graphApi } from '@/api/graph';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { GraphCanvas } from './GraphCanvas';
+import type { GraphCanvasHandle } from './GraphCanvas';
+import { buildGraphLayout } from './graphLayout';
 import styles from './GraphPage.module.css';
 
-interface N {
-  id: string;
-  name: string;
-  trackCount: number;
-  x: number;
-  y: number;
-}
-interface L {
-  s: N;
-  t: N;
-  weight: number;
-}
-interface SimNode extends SimulationNodeDatum {
-  id: string;
-  name: string;
-  trackCount: number;
-}
-interface SimLink extends SimulationLinkDatum<SimNode> {
-  weight: number;
-}
-
-function radius(tc: number) {
-  return 5 + Math.sqrt(tc) * 2.2;
-}
-
 export function GraphPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['graph'],
     queryFn: () => graphApi.collaborations(),
+    staleTime: 5 * 60 * 1000,
   });
   const navigate = useNavigate();
-  const [nodes, setNodes] = useState<N[]>([]);
-  const [links, setLinks] = useState<L[]>([]);
-  const [t, setT] = useState({ x: 0, y: 0, k: 1 });
-  const [hover, setHover] = useState<string | null>(null);
+  const dense = useMediaQuery('(max-width: 760px)');
+
+  const canvasRef = useRef<GraphCanvasHandle>(null);
   const [query, setQuery] = useState('');
-  const pan = useRef<{ px: number; py: number; ox: number; oy: number } | null>(
-    null,
+  const [selected, setSelected] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  // La planche épouse le format réel de la zone de dessin (portrait sur
+  // téléphone, paysage sur ordinateur) : aucun bord perdu, donc plus de zoom.
+  const [stageEl, setStageEl] = useState<HTMLDivElement | null>(null);
+  const [aspect, setAspect] = useState<number | null>(null);
+  useEffect(() => {
+    if (!stageEl) return;
+    const measure = () => {
+      const r = stageEl.getBoundingClientRect();
+      if (r.width < 40 || r.height < 40) return;
+      const next = Math.round(Math.min(3, Math.max(0.4, r.width / r.height)) * 4) / 4;
+      setAspect((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(stageEl);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [stageEl]);
+
+  const layout = useMemo(
+    () => buildGraphLayout(data, aspect ?? (dense ? 0.62 : 1.8)),
+    [data, aspect, dense],
   );
-  const fit = useRef({ x: 0, y: 0, k: 1 });
+
+  const q = query.trim().toLowerCase();
+  const matches = useMemo(() => {
+    if (!layout || !q) return null;
+    const found: number[] = [];
+    for (let i = 0; i < layout.nodes.length; i++) {
+      if (layout.nodes[i].name.toLowerCase().includes(q)) found.push(i);
+    }
+    found.sort((a, b) => {
+      const na = layout.nodes[a].name.toLowerCase();
+      const nb = layout.nodes[b].name.toLowerCase();
+      const sa = na.startsWith(q) ? 0 : 1;
+      const sb = nb.startsWith(q) ? 0 : 1;
+      return sa - sb || na.length - nb.length;
+    });
+    return found;
+  }, [layout, q]);
+
+  const matchedSet = useMemo(
+    () => (matches ? new Set(matches) : null),
+    [matches],
+  );
+
+  /* Une seule correspondance : on va directement dessus. */
+  useEffect(() => {
+    if (matches && matches.length === 1) {
+      setSelected(matches[0]);
+      canvasRef.current?.focus(matches[0]);
+    }
+  }, [matches]);
 
   useEffect(() => {
-    if (!data || !data.nodes.length) {
-      setNodes([]);
-      setLinks([]);
-      return;
-    }
-    const ns: SimNode[] = data.nodes.map((n) => ({
-      ...n,
-      x: (Math.random() - 0.5) * 400,
-      y: (Math.random() - 0.5) * 400,
-    }));
-    const ls: SimLink[] = data.edges.map((e) => ({
-      source: e.source,
-      target: e.target,
-      weight: e.weight,
-    }));
-    const sim = forceSimulation<SimNode>(ns)
-      .force(
-        'link',
-        forceLink<SimNode, SimLink>(ls)
-          .id((d) => d.id)
-          .distance((l) => 100 - Math.min(l.weight, 8) * 6)
-          .strength(0.6),
-      )
-      .force('charge', forceManyBody<SimNode>().strength(-280))
-      .force('center', forceCenter<SimNode>(0, 0))
-      .force(
-        'collide',
-        forceCollide<SimNode>().radius((d) => radius(d.trackCount) + 10),
-      )
-      .stop();
-    for (let i = 0; i < 320; i++) sim.tick();
-
-    const byId = new Map(ns.map((n) => [n.id, n]));
-    setNodes(
-      ns.map((n) => ({
-        id: n.id,
-        name: n.name,
-        trackCount: n.trackCount,
-        x: n.x ?? 0,
-        y: n.y ?? 0,
-      })),
-    );
-    setLinks(
-      ls
-        .map((l) => {
-          const src = l.source as unknown as { id?: string } | string;
-          const tgt = l.target as unknown as { id?: string } | string;
-          const sid = typeof src === 'object' ? src.id! : src;
-          const tid = typeof tgt === 'object' ? tgt.id! : tgt;
-          return { s: byId.get(sid), t: byId.get(tid), weight: l.weight };
-        })
-        .filter((l): l is L => !!l.s && !!l.t),
-    );
-    // Ajuste la vue à l'étendue réelle des nœuds (sinon ils débordent du viewBox).
-    const xs = ns.map((n) => n.x ?? 0);
-    const ys = ns.map((n) => n.y ?? 0);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    const k = Math.min(
-      820 / Math.max(maxX - minX, 1),
-      560 / Math.max(maxY - minY, 1),
-      1.4,
-    );
-    fit.current = {
-      x: -((minX + maxX) / 2) * k,
-      y: -((minY + maxY) / 2) * k,
-      k,
-    };
-    setT(fit.current);
+    setSelected(null);
   }, [data]);
 
-  if (isLoading)
+  useEffect(() => {
+    if (!expanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [expanded]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (expanded) setExpanded(false);
+      else if (selected !== null) setSelected(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [expanded, selected]);
+
+  const node = layout && selected !== null ? layout.nodes[selected] : null;
+
+  /** Collaborateurs du nœud sélectionné, les plus fournis d'abord. */
+  const collaborators = useMemo(() => {
+    if (!layout || selected === null) return [];
+    const list: { index: number; weight: number }[] = [];
+    for (const e of layout.edges) {
+      if (e.a === selected) list.push({ index: e.b, weight: e.weight });
+      else if (e.b === selected) list.push({ index: e.a, weight: e.weight });
+    }
+    return list.sort((x, y) => y.weight - x.weight).slice(0, 8);
+  }, [layout, selected]);
+
+  const focusNode = (index: number) => {
+    setSelected(index);
+    canvasRef.current?.focus(index);
+  };
+
+  if (isLoading) {
     return (
       <div>
         <PageHeader title="Graphe" />
-        <Spinner />
+        <div className={styles.center}>
+          <Spinner />
+        </div>
       </div>
     );
-  if (!data || !data.nodes.length)
+  }
+
+  if (isError) {
+    return (
+      <div>
+        <PageHeader title="Graphe" />
+        <EmptyState mark="⚠">
+          Impossible de charger le graphe. Vérifie que le serveur répond, puis
+          recharge la page.
+        </EmptyState>
+      </div>
+    );
+  }
+
+  if (!layout || !layout.nodes.length) {
     return (
       <div>
         <PageHeader title="Graphe" />
         <EmptyState>
-          Pas encore de collaborations à visualiser. Le graphe relie les
-          artistes qui partagent un titre.
+          Pas encore de collaborations à visualiser. Le graphe relie les artistes
+          qui partagent un titre.
         </EmptyState>
       </div>
     );
-
-  const onWheel = (e: RWheelEvent) => {
-    const factor = e.deltaY < 0 ? 1.12 : 0.89;
-    setT((p) => ({ ...p, k: Math.max(0.3, Math.min(4, p.k * factor)) }));
-  };
-  const onDown = (e: RPointerEvent) => {
-    pan.current = { px: e.clientX, py: e.clientY, ox: t.x, oy: t.y };
-  };
-  const onMove = (e: RPointerEvent) => {
-    if (!pan.current) return;
-    setT((p) => ({
-      ...p,
-      x: pan.current!.ox + (e.clientX - pan.current!.px),
-      y: pan.current!.oy + (e.clientY - pan.current!.py),
-    }));
-  };
-  const onUp = () => {
-    pan.current = null;
-  };
-  const zoomBy = (f: number) =>
-    setT((p) => ({ ...p, k: Math.max(0.3, Math.min(4, p.k * f)) }));
-  const recenter = () => setT(fit.current);
-
-  const q = query.trim().toLowerCase();
-  const matchedIds = new Set(
-    q
-      ? nodes.filter((n) => n.name.toLowerCase().includes(q)).map((n) => n.id)
-      : [],
-  );
-  const centerOn = (node: N) => {
-    const k = Math.max(t.k, 1.5);
-    setT({ x: -node.x * k, y: -node.y * k, k });
-  };
-  const focusMatch = (value: string) => {
-    const qq = value.trim().toLowerCase();
-    if (!qq) return;
-    const matches = nodes.filter((n) => n.name.toLowerCase().includes(qq));
-    if (!matches.length) return;
-    const best = [...matches].sort((a, b) => {
-      const sa = a.name.toLowerCase().startsWith(qq) ? 0 : 1;
-      const sb = b.name.toLowerCase().startsWith(qq) ? 0 : 1;
-      return sa - sb || a.name.length - b.name.length;
-    })[0];
-    centerOn(best);
-  };
+  }
 
   return (
-    <div>
-      <PageHeader title="Graphe" />
-      <p className={styles.hint}>
-        Chaque point est un artiste (taille = nombre de titres), chaque trait une
-        collaboration. Touche un point pour l'ouvrir · glisse pour déplacer ·
-        molette pour zoomer.
-      </p>
-      <div className={styles.searchBar}>
-        <Search size={16} className={styles.searchIcon} />
-        <input
-          className={styles.searchInput}
-          placeholder="Rechercher un artiste dans le graphe…"
-          value={query}
-          onChange={(e) => {
-            const v = e.target.value;
-            setQuery(v);
-            const qq = v.trim().toLowerCase();
-            const m = qq
-              ? nodes.filter((n) => n.name.toLowerCase().includes(qq))
-              : [];
-            if (m.length === 1) centerOn(m[0]);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') focusMatch(query);
-          }}
-        />
-        {query && (
-          <button
-            type="button"
-            className={styles.searchClear}
-            onClick={() => setQuery('')}
-            aria-label="Effacer la recherche"
-          >
-            <X size={15} />
-          </button>
+    <div className={expanded ? styles.expanded : undefined}>
+      {!expanded && (
+        <>
+          <PageHeader title="Graphe" />
+          <p className={styles.hint}>
+            {layout.nodes.length} artistes, {layout.edges.length} collaborations,{' '}
+            {layout.clusterCount} groupes. Taille du point = nombre de titres,
+            épaisseur du trait = collaborations partagées.
+          </p>
+        </>
+      )}
+
+      <div className={styles.controls}>
+        <div className={styles.searchBar}>
+          <Search size={16} className={styles.searchIcon} aria-hidden="true" />
+          <input
+            className={styles.searchInput}
+            placeholder="Rechercher un artiste…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && matches?.length) focusNode(matches[0]);
+            }}
+            aria-label="Rechercher un artiste dans le graphe"
+          />
+          {query && (
+            <button
+              type="button"
+              className={styles.searchClear}
+              onClick={() => setQuery('')}
+              aria-label="Effacer la recherche"
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
+        {matches && (
+          <span className={styles.count}>
+            {matches.length === 0
+              ? 'aucun résultat'
+              : `${matches.length} résultat${matches.length > 1 ? 's' : ''}`}
+          </span>
         )}
       </div>
-      <div
-        className={styles.canvas}
-        onWheel={onWheel}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerLeave={onUp}
-      >
+
+      {matches && matches.length > 1 && (
+        <div className={styles.matchRow}>
+          {matches.slice(0, 24).map((i) => (
+            <button
+              key={layout.nodes[i].id}
+              type="button"
+              className={styles.chip}
+              onClick={() => focusNode(i)}
+            >
+              {layout.nodes[i].name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className={styles.stage} ref={setStageEl}>
+        <GraphCanvas
+          ref={canvasRef}
+          layout={layout}
+          matched={matchedSet}
+          selected={selected}
+          dense={dense}
+          onSelect={setSelected}
+          onOpen={(i) => navigate(`/music/artists/${layout.nodes[i].id}`)}
+        />
+
         <div className={styles.toolbar}>
-          <button type="button" onClick={() => zoomBy(1.25)} aria-label="Zoomer">
+          <button
+            type="button"
+            onClick={() => canvasRef.current?.zoomBy(1.3)}
+            aria-label="Zoomer"
+          >
             <Plus size={18} />
           </button>
-          <button type="button" onClick={() => zoomBy(0.8)} aria-label="Dézoomer">
+          <button
+            type="button"
+            onClick={() => canvasRef.current?.zoomBy(1 / 1.3)}
+            aria-label="Dézoomer"
+          >
             <Minus size={18} />
           </button>
-          <button type="button" onClick={recenter} aria-label="Recentrer la vue">
+          <button
+            type="button"
+            onClick={() => canvasRef.current?.fit()}
+            aria-label="Tout afficher"
+          >
             <Locate size={18} />
           </button>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-label={expanded ? 'Quitter le plein écran' : 'Plein écran'}
+          >
+            {expanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
         </div>
-        <svg
-          className={styles.svg}
-          viewBox="-450 -320 900 640"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <g transform={`translate(${t.x} ${t.y}) scale(${t.k})`}>
-            {links.map((l, i) => (
-              <line
-                key={i}
-                x1={l.s.x}
-                y1={l.s.y}
-                x2={l.t.x}
-                y2={l.t.y}
-                className={styles.edge}
-                style={{
-                  strokeWidth: Math.min(1 + l.weight * 0.4, 4),
-                  opacity: q
-                    ? matchedIds.has(l.s.id) || matchedIds.has(l.t.id)
-                      ? 0.55
-                      : 0.04
-                    : hover
-                      ? l.s.id === hover || l.t.id === hover
-                        ? 0.9
-                        : 0.08
-                      : 0.32,
-                }}
-              />
-            ))}
-            {nodes.map((n) => {
-              const r = radius(n.trackCount);
-              const active = hover === n.id;
-              const matched = matchedIds.has(n.id);
-              return (
-                <g
-                  key={n.id}
-                  transform={`translate(${n.x} ${n.y})`}
-                  className={styles.node}
-                  onClick={() => navigate(`/music/artists/${n.id}`)}
-                  onPointerEnter={() => setHover(n.id)}
-                  onPointerLeave={() => setHover(null)}
-                >
-                  {(active || matched) && (
-                    <circle r={r + 4} className={styles.ring} />
-                  )}
-                  <circle
-                    r={r}
-                    className={styles.dot}
-                    style={{
-                      opacity: q ? (matched ? 1 : 0.12) : hover && !active ? 0.35 : 1,
-                    }}
-                  />
-                  <text
-                    y={r + 12}
-                    className={styles.label}
-                    style={{
-                      opacity:
-                        matched || active || (!q && t.k > 1.3)
-                          ? 1
-                          : q
-                            ? 0.1
-                            : 0.7,
-                    }}
+
+        {node && (
+          <aside className={styles.card}>
+            <button
+              type="button"
+              className={styles.cardClose}
+              onClick={() => setSelected(null)}
+              aria-label="Fermer"
+            >
+              <X size={15} />
+            </button>
+            <h2 className={styles.cardTitle}>{node.name}</h2>
+            <p className={styles.cardMeta}>
+              {node.trackCount} titre{node.trackCount > 1 ? 's' : ''} ·{' '}
+              {node.degree} collaborateur{node.degree > 1 ? 's' : ''}
+            </p>
+            {collaborators.length > 0 && (
+              <div className={styles.cardChips}>
+                {collaborators.map((c) => (
+                  <button
+                    key={layout.nodes[c.index].id}
+                    type="button"
+                    className={styles.chip}
+                    onClick={() => focusNode(c.index)}
+                    title={`${c.weight} titre${c.weight > 1 ? 's' : ''} en commun`}
                   >
-                    {n.name.length > 18 ? `${n.name.slice(0, 17)}…` : n.name}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+                    {layout.nodes[c.index].name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              className={styles.cardAction}
+              onClick={() => navigate(`/music/artists/${node.id}`)}
+            >
+              Ouvrir la page artiste
+              <ArrowRight size={15} />
+            </button>
+          </aside>
+        )}
       </div>
+
+      <p className={styles.legend}>
+        {dense
+          ? 'Touche un point pour le détail, double-touche pour ouvrir l’artiste · pince pour zoomer.'
+          : 'Clique un point pour le détail, double-clic pour ouvrir l’artiste · glisse pour déplacer, molette pour zoomer.'}
+      </p>
     </div>
   );
 }
