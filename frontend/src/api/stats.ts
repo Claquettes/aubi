@@ -31,4 +31,10 @@ export const statsApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  // Appui sur le bouton lecture d'un album (≠ écoute d'un titre).
+  albumPlay: (albumId: string, source = 'album') =>
+    apiJson<{ id: string; albumPlayCount: number }>(
+      `/api/v1/stats/album-play`,
+      { method: 'POST', body: JSON.stringify({ albumId, source }) },
+    ),
 };

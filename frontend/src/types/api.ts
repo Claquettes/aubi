@@ -33,7 +33,11 @@ export interface Album {
   trackCount: number;
   durationMs: number;
   coverUrl: string | null;
+  /** Somme des écoutes des titres de l'album. */
   playCount: number;
+  /** Nombre de fois où le bouton lecture de l'album a été pressé. */
+  albumPlayCount: number;
+  lastPlayedAt: string | null;
   isLiked: boolean;
   isCompilation: boolean;
 }
@@ -48,6 +52,9 @@ export interface Artist {
   slug: string;
   albumCount: number;
   trackCount: number;
+  /** Somme des écoutes de tous les titres de l'artiste (feats compris). */
+  playCount: number;
+  lastPlayedAt: string | null;
   coverUrl: string | null;
   isLiked: boolean;
 }
@@ -137,6 +144,7 @@ export interface StatsOverview {
   totalTracks: number;
   totalListenedMs: number;
   totalPlayEvents: number;
+  totalAlbumPlays: number;
   mostPlayedSection: string;
   currentStreak: number;
   longestStreak: number;

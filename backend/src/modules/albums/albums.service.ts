@@ -10,6 +10,15 @@ import { TracksService } from '../tracks/tracks.service';
 
 @Injectable()
 export class AlbumsService {
+  // Lectures d'un album = somme des écoutes de ses titres (v_track_play_counts
+  // ne compte que les écoutes terminées).
+  private static readonly PLAY_COUNT_SQL = `(
+    SELECT COALESCE(SUM(COALESCE(v.play_count, 0)), 0)
+    FROM tracks t
+    LEFT JOIN v_track_play_counts v ON v.track_id = t.id
+    WHERE t.album_id = a.id AND t.deleted_at IS NULL
+  )`;
+
   constructor(
     @InjectRepository(Album)
     private readonly albumRepo: Repository<Album>,
@@ -23,7 +32,13 @@ export class AlbumsService {
   private async albumStats(albumIds: string[]) {
     const map = new Map<
       string,
-      { trackCount: number; durationMs: number; playCount: number }
+      {
+        trackCount: number;
+        durationMs: number;
+        playCount: number;
+        albumPlayCount: number;
+        lastPlayedAt: Date | null;
+      }
     >();
     if (albumIds.length === 0) return map;
     const rows = await this.dataSource.query<
@@ -32,13 +47,15 @@ export class AlbumsService {
         track_count: string;
         duration_ms: string;
         play_count: string;
+        last_played_at: Date | null;
       }[]
     >(
       `
       SELECT t.album_id,
              COUNT(t.id)::int AS track_count,
              COALESCE(SUM(t.duration_ms), 0)::bigint AS duration_ms,
-             COALESCE(SUM(COALESCE(v.play_count, 0)), 0)::int AS play_count
+             COALESCE(SUM(COALESCE(v.play_count, 0)), 0)::int AS play_count,
+             MAX(v.last_played_at) AS last_played_at
       FROM tracks t
       LEFT JOIN v_track_play_counts v ON v.track_id = t.id
       WHERE t.deleted_at IS NULL AND t.album_id = ANY($1)
@@ -51,7 +68,30 @@ export class AlbumsService {
         trackCount: Number(r.track_count),
         durationMs: Number(r.duration_ms),
         playCount: Number(r.play_count),
+        albumPlayCount: 0,
+        lastPlayedAt: r.last_played_at,
       });
+    }
+    // Lancements de l'album (appuis sur son bouton lecture), comptés à part :
+    // un album jamais lancé n'apparaît pas dans la requête ci-dessus non plus.
+    const launches = await this.dataSource.query<
+      { album_id: string; c: string }[]
+    >(
+      `SELECT album_id, COUNT(*)::int AS c FROM album_plays
+       WHERE album_id = ANY($1) GROUP BY album_id`,
+      [albumIds],
+    );
+    for (const r of launches) {
+      const cur = map.get(r.album_id);
+      if (cur) cur.albumPlayCount = Number(r.c);
+      else
+        map.set(r.album_id, {
+          trackCount: 0,
+          durationMs: 0,
+          playCount: 0,
+          albumPlayCount: Number(r.c),
+          lastPlayedAt: null,
+        });
     }
     return map;
   }
@@ -87,18 +127,28 @@ export class AlbumsService {
     qb.andWhere('a.is_compilation = :comp', {
       comp: query.isCompilation === true,
     });
-    const sort =
-      query.sort === 'title'
-        ? 'a.title'
-        : query.sort === 'year'
-          ? 'a.year'
-          : 'a.createdAt';
-    const order = query.order === 'asc' ? 'ASC' : 'DESC';
-    qb.orderBy(sort, order);
+    // Compté avant l'ORDER BY : le tri « plays » est une sous-requête corrélée,
+    // qui n'a rien à faire dans un COUNT.
     const total = await qb.clone().getCount();
+    const order = query.order === 'asc' ? 'ASC' : 'DESC';
+    if (query.sort === 'plays') {
+      qb.orderBy(AlbumsService.PLAY_COUNT_SQL, order);
+      qb.addOrderBy('a.title', 'ASC');
+    } else {
+      const sort =
+        query.sort === 'title'
+          ? 'a.title'
+          : query.sort === 'year'
+            ? 'a.year'
+            : 'a.createdAt';
+      qb.orderBy(sort, order);
+    }
+    // offset/limit (et non skip/take) : la seule jointure est un ManyToOne, donc
+    // pas de duplication de lignes, et on évite la pagination « distinct » de
+    // TypeORM qui ne sait pas trier sur une expression brute.
     const rows = await qb
-      .skip((page - 1) * limit)
-      .take(limit)
+      .offset((page - 1) * limit)
+      .limit(limit)
       .getMany();
     const stats = await this.albumStats(rows.map((a) => a.id));
     const liked = await this.likedAlbumIds(rows.map((a) => a.id));
@@ -115,6 +165,8 @@ export class AlbumsService {
         durationMs: s?.durationMs ?? 0,
         coverUrl: `/api/v1/covers/${a.id}.jpg`,
         playCount: s?.playCount ?? 0,
+        albumPlayCount: s?.albumPlayCount ?? 0,
+        lastPlayedAt: s?.lastPlayedAt?.toISOString() ?? null,
         isLiked: liked.has(a.id),
         isCompilation: a.isCompilation,
       };
@@ -151,6 +203,8 @@ export class AlbumsService {
       durationMs: s?.durationMs ?? 0,
       coverUrl: `/api/v1/covers/${a.id}.jpg`,
       playCount: s?.playCount ?? 0,
+      albumPlayCount: s?.albumPlayCount ?? 0,
+      lastPlayedAt: s?.lastPlayedAt?.toISOString() ?? null,
       isLiked: likedSet.has(a.id),
       isCompilation: a.isCompilation,
       tracks: tracks.map((t) =>

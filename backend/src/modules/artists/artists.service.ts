@@ -12,6 +12,16 @@ import { TracksService } from '../tracks/tracks.service';
 
 @Injectable()
 export class ArtistsService {
+  // Écoutes d'un artiste = somme des écoutes de tous ses titres (via
+  // track_artists, donc les feats comptent aussi).
+  private static readonly PLAY_COUNT_SQL = `(
+    SELECT COALESCE(SUM(COALESCE(v.play_count, 0)), 0)
+    FROM track_artists ta
+    JOIN tracks t ON t.id = ta.track_id AND t.deleted_at IS NULL
+    LEFT JOIN v_track_play_counts v ON v.track_id = t.id
+    WHERE ta.artist_id = ar.id
+  )`;
+
   constructor(
     @InjectRepository(Artist)
     private readonly artistRepo: Repository<Artist>,
@@ -66,14 +76,20 @@ export class ArtistsService {
         maxTracks: query.maxTracks,
       });
     }
-    const sort =
-      query.sort === 'name' ? 'ar.name' : 'ar.createdAt';
-    const order = query.order === 'desc' ? 'DESC' : 'ASC';
-    qb.orderBy(sort, order);
+    // Compté avant l'ORDER BY : le tri « plays » est une sous-requête corrélée.
     const total = await qb.clone().getCount();
+    const order = query.order === 'desc' ? 'DESC' : 'ASC';
+    if (query.sort === 'plays') {
+      qb.orderBy(ArtistsService.PLAY_COUNT_SQL, order);
+      qb.addOrderBy('ar.name', 'ASC');
+    } else {
+      qb.orderBy(query.sort === 'name' ? 'ar.name' : 'ar.createdAt', order);
+    }
+    // offset/limit : aucune jointure ici, et la pagination « distinct » de
+    // TypeORM ne sait pas trier sur une expression brute.
     const rows = await qb
-      .skip((page - 1) * limit)
-      .take(limit)
+      .offset((page - 1) * limit)
+      .limit(limit)
       .getMany();
     const ids = rows.map((r) => r.id);
     const counts = await this.artistCounts(ids);
@@ -84,6 +100,8 @@ export class ArtistsService {
       slug: a.slug,
       albumCount: counts.get(a.id)?.albumCount ?? 0,
       trackCount: counts.get(a.id)?.trackCount ?? 0,
+      playCount: counts.get(a.id)?.playCount ?? 0,
+      lastPlayedAt: counts.get(a.id)?.lastPlayedAt?.toISOString() ?? null,
       coverUrl: counts.get(a.id)?.coverUrl ?? null,
       isLiked: liked.has(a.id),
     }));
@@ -93,7 +111,13 @@ export class ArtistsService {
   private async artistCounts(artistIds: string[]) {
     const map = new Map<
       string,
-      { albumCount: number; trackCount: number; coverUrl: string | null }
+      {
+        albumCount: number;
+        trackCount: number;
+        playCount: number;
+        lastPlayedAt: Date | null;
+        coverUrl: string | null;
+      }
     >();
     if (artistIds.length === 0) return map;
     const albums = await this.dataSource.query<
@@ -111,6 +135,19 @@ export class ArtistsService {
       `SELECT ta.artist_id, COUNT(DISTINCT t.id)::int AS c
        FROM track_artists ta JOIN tracks t ON t.id = ta.track_id
        WHERE t.deleted_at IS NULL AND ta.artist_id = ANY($1)
+       GROUP BY ta.artist_id`,
+      [artistIds],
+    );
+    const plays = await this.dataSource.query<
+      { artist_id: string; c: string; last_played_at: Date | null }[]
+    >(
+      `SELECT ta.artist_id,
+              COALESCE(SUM(COALESCE(v.play_count, 0)), 0)::int AS c,
+              MAX(v.last_played_at) AS last_played_at
+       FROM track_artists ta
+       JOIN tracks t ON t.id = ta.track_id AND t.deleted_at IS NULL
+       LEFT JOIN v_track_play_counts v ON v.track_id = t.id
+       WHERE ta.artist_id = ANY($1)
        GROUP BY ta.artist_id`,
       [artistIds],
     );
@@ -135,6 +172,8 @@ export class ArtistsService {
       map.set(id, {
         albumCount: 0,
         trackCount: 0,
+        playCount: 0,
+        lastPlayedAt: null,
         coverUrl: coverByArtist.get(id) ?? null,
       });
     }
@@ -145,6 +184,13 @@ export class ArtistsService {
     for (const r of tracks) {
       const cur = map.get(r.artist_id);
       if (cur) cur.trackCount = Number(r.c);
+    }
+    for (const r of plays) {
+      const cur = map.get(r.artist_id);
+      if (cur) {
+        cur.playCount = Number(r.c);
+        cur.lastPlayedAt = r.last_played_at;
+      }
     }
     return map;
   }
@@ -181,6 +227,8 @@ export class ArtistsService {
       slug: a.slug,
       albumCount: c?.albumCount ?? 0,
       trackCount: c?.trackCount ?? 0,
+      playCount: c?.playCount ?? 0,
+      lastPlayedAt: c?.lastPlayedAt?.toISOString() ?? null,
       coverUrl: c?.coverUrl ?? null,
       isLiked: likedSet.has(a.id),
       albums: albums.map((al) => ({

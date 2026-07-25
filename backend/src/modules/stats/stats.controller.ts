@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { StatsService } from './stats.service';
 import { PlayEventDto } from './dto/play-event.dto';
+import { AlbumPlayDto } from './dto/album-play.dto';
 import { DailyQueryDto, TopQueryDto } from './dto/stats-query.dto';
 
 @Controller('stats')
@@ -48,5 +49,12 @@ export class StatsController {
   @HttpCode(201)
   recordPlay(@Body() body: PlayEventDto) {
     return this.stats.recordPlay(body);
+  }
+
+  // Un appui sur le bouton lecture d'un album (≠ écoute d'un titre).
+  @Post('album-play')
+  @HttpCode(201)
+  recordAlbumPlay(@Body() body: AlbumPlayDto) {
+    return this.stats.recordAlbumPlay(body);
   }
 }

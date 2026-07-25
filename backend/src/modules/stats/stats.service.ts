@@ -3,8 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, In, IsNull, Repository } from 'typeorm';
 import { PlayEvent } from '../../database/entities/play-event.entity';
+import { AlbumPlay } from '../../database/entities/album-play.entity';
+import { Album } from '../../database/entities/album.entity';
 import { Track } from '../../database/entities/track.entity';
 import { PlayEventDto } from './dto/play-event.dto';
+import { AlbumPlayDto } from './dto/album-play.dto';
 import { DailyQueryDto, TopQueryDto } from './dto/stats-query.dto';
 import { TracksService } from '../tracks/tracks.service';
 
@@ -13,6 +16,10 @@ export class StatsService {
   constructor(
     @InjectRepository(PlayEvent)
     private readonly playRepo: Repository<PlayEvent>,
+    @InjectRepository(AlbumPlay)
+    private readonly albumPlayRepo: Repository<AlbumPlay>,
+    @InjectRepository(Album)
+    private readonly albumRepo: Repository<Album>,
     @InjectRepository(Track)
     private readonly trackRepo: Repository<Track>,
     @InjectDataSource()
@@ -53,6 +60,21 @@ export class StatsService {
     return { id: ev.id };
   }
 
+  async recordAlbumPlay(dto: AlbumPlayDto) {
+    const a = await this.albumRepo.findOne({ where: { id: dto.albumId } });
+    if (!a) throw new NotFoundException('Album not found');
+    const ev = this.albumPlayRepo.create({
+      albumId: dto.albumId,
+      source: dto.source ?? 'album',
+    });
+    await this.albumPlayRepo.save(ev);
+    const [row] = await this.dataSource.query<{ c: string }[]>(
+      `SELECT COUNT(*)::int AS c FROM album_plays WHERE album_id = $1`,
+      [dto.albumId],
+    );
+    return { id: ev.id, albumPlayCount: Number(row?.c ?? 0) };
+  }
+
   async overview() {
     const totalTracks = await this.trackRepo.count({
       where: { deletedAt: IsNull() },
@@ -68,11 +90,15 @@ export class StatsService {
     >(
       `SELECT section, COUNT(*)::int AS c FROM play_events GROUP BY section ORDER BY c DESC LIMIT 1`,
     );
+    const albumPlays = await this.dataSource.query<{ c: string }[]>(
+      `SELECT COUNT(*)::int AS c FROM album_plays`,
+    );
     const streaks = await this.computeStreaks();
     return {
       totalTracks,
       totalListenedMs: Number(row?.ms ?? 0),
       totalPlayEvents: Number(row?.c ?? 0),
+      totalAlbumPlays: Number(albumPlays[0]?.c ?? 0),
       mostPlayedSection: sectionRow[0]?.section ?? 'music',
       currentStreak: streaks.current,
       longestStreak: streaks.longest,
