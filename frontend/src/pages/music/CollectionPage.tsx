@@ -36,6 +36,7 @@ export function CollectionPage() {
   return (
     <div className="page-enter">
       <DetailHero
+        backFallback="/playlists"
         accent={accent}
         coverUrl={col.coverUrl}
         label={col.name}

@@ -46,6 +46,7 @@ export function PlaylistPage() {
   return (
     <div className="page-enter">
       <DetailHero
+        backFallback="/playlists"
         accent={accent}
         coverUrl={pl.coverUrl}
         label={pl.name}

@@ -8,8 +8,8 @@ import { GridSkeleton } from './GridSkeleton';
 export function AlbumsGrid({
   artistId,
   search,
-  sort = 'title',
-  order = 'asc',
+  sort = 'plays',
+  order = 'desc',
   isLiked,
 }: {
   artistId?: string;

@@ -52,6 +52,7 @@ export function BookDetail({ id, kicker }: { id: string; kicker: string }) {
   return (
     <div className="page-enter">
       <DetailHero
+        backFallback="/audiobooks"
         accent={accent}
         coverUrl={book.coverUrl}
         label={book.title}

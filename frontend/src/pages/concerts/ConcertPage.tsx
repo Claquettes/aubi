@@ -40,6 +40,7 @@ export function ConcertPage() {
   return (
     <div className="page-enter">
       <DetailHero
+        backFallback="/concerts"
         accent={accent}
         coverUrl={concert.coverUrl}
         label={concert.title}

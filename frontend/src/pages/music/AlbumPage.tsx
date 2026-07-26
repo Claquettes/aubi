@@ -1,8 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { albumsApi } from '@/api/albums';
+import { statsApi } from '@/api/stats';
 import { DurationText } from '@/components/media/DurationText';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
@@ -28,6 +29,7 @@ export function AlbumPage() {
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
   const [editing, setEditing] = useState(false);
+  const queryClient = useQueryClient();
 
   if (isLoading) return <Spinner />;
   if (!album) return <EmptyState>Album introuvable.</EmptyState>;
@@ -37,7 +39,20 @@ export function AlbumPage() {
     if (!tracks.length) return;
     setSource(`album:${album.id}`);
     playTrack(tracks[0], tracks, 0);
+    // Compteur de lancements de l'album : distinct des écoutes de titres.
+    // Best-effort — un échec réseau ne doit pas couper la lecture.
+    statsApi
+      .albumPlay(album.id)
+      .then(({ albumPlayCount }) => {
+        queryClient.setQueryData(
+          ['album', album.id],
+          (prev: typeof album | undefined) =>
+            prev ? { ...prev, albumPlayCount } : prev,
+        );
+      })
+      .catch(() => {});
   };
+  const plural = (n: number) => (n > 1 ? 's' : '');
 
   return (
     <div className="page-enter">
@@ -63,6 +78,9 @@ export function AlbumPage() {
             )}
             {!album.isCompilation && album.year ? ` · ${album.year}` : ''} ·{' '}
             {album.trackCount} titres · <DurationText ms={album.durationMs} />
+            <br />
+            {album.albumPlayCount} lancement{plural(album.albumPlayCount)} ·{' '}
+            {album.playCount} écoute{plural(album.playCount)} de titres
           </>
         }
         actions={

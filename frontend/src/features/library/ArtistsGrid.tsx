@@ -11,8 +11,8 @@ import styles from './library.module.css';
 
 export function ArtistsGrid({
   search,
-  sort = 'name',
-  order = 'asc',
+  sort = 'plays',
+  order = 'desc',
   isLiked,
 }: {
   search?: string;

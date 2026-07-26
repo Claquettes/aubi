@@ -45,6 +45,9 @@ export function ArtistPage() {
               </>
             )}
             {artist.trackCount} titre{artist.trackCount > 1 ? 's' : ''}
+            <br />
+            {/* Somme des écoutes de tous les titres de l'artiste. */}
+            {artist.playCount} écoute{artist.playCount > 1 ? 's' : ''}
           </>
         }
         actions={

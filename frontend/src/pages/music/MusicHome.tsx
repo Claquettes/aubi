@@ -10,27 +10,40 @@ type Tab = 'albums' | 'artists';
 
 const SORTS: Record<'albums' | 'artists', { value: string; label: string }[]> = {
   albums: [
+    { value: 'plays', label: 'Lectures' },
     { value: 'title', label: 'Titre' },
     { value: 'year', label: 'Année' },
     { value: 'recent', label: 'Récent' },
   ],
   artists: [
+    { value: 'plays', label: 'Lectures' },
     { value: 'name', label: 'Nom' },
     { value: 'recent', label: 'Récent' },
   ],
 };
 
+// Ordre naturel d'un tri : décroissant pour les quantités/dates, alphabétique
+// croissant pour les libellés.
+function defaultOrder(sort: string): 'asc' | 'desc' {
+  return sort === 'title' || sort === 'name' ? 'asc' : 'desc';
+}
+
 export function MusicHome() {
   const [tab, setTab] = useState<Tab>('albums');
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState('title');
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [sort, setSort] = useState('plays');
+  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
   const [onlyLiked, setOnlyLiked] = useState(false);
   const debounced = useDebounce(search.trim(), 250);
 
   const switchTab = (t: Tab) => {
     setTab(t);
-    setSort(SORTS[t][0].value);
+    changeSort(SORTS[t][0].value);
+  };
+
+  const changeSort = (s: string) => {
+    setSort(s);
+    setOrder(defaultOrder(s));
   };
 
   const tabBtn = (t: Tab, label: string) => (
@@ -65,7 +78,7 @@ export function MusicHome() {
           <select
             className={styles.select}
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => changeSort(e.target.value)}
             aria-label="Trier par"
           >
             {SORTS[tab].map((s) => (

@@ -1,0 +1,65 @@
+/* Pastille papier posée sur le hero teinté : lisible quelle que soit la
+   pochette, sans jamais masquer la pochette elle-même. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 40px;
+  padding: 0 var(--space-4) 0 var(--space-3);
+  background: color-mix(in oklab, var(--color-paper-high) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(1.2);
+  color: var(--color-ink);
+  border: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
+  border-radius: var(--radius-round);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  box-shadow: var(--shadow-paper-1);
+  transition:
+    transform var(--duration-fast) var(--ease-spring),
+    background var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+.back:hover {
+  background: var(--color-paper-high);
+  box-shadow: var(--shadow-paper-2);
+  transform: translateX(-2px);
+}
+.back:active {
+  transform: scale(0.96);
+}
+.back:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* Sur les petits écrans le libellé disparaît : la flèche seule suffit et
+   laisse la place au titre. */
+.label {
+  display: none;
+}
+@media (min-width: 480px) {
+  .label {
+    display: inline;
+  }
+}
+@media (max-width: 479px) {
+  .back {
+    /* 44px : cible tactile confortable au pouce. */
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back {
+    transition: none;
+  }
+  .back:hover,
+  .back:active {
+    transform: none;
+  }
+}

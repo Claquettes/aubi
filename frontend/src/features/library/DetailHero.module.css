@@ -3,7 +3,8 @@
   position: relative;
   isolation: isolate;
   margin: calc(-1 * var(--space-8)) calc(-1 * var(--_gutter)) var(--space-8);
-  padding: calc(var(--space-12) + env(safe-area-inset-top, 0px)) var(--_gutter)
+  /* space-16 en haut : laisse passer le bouton retour au-dessus de la pochette. */
+  padding: calc(var(--space-16) + env(safe-area-inset-top, 0px)) var(--_gutter)
     var(--space-8);
   overflow: hidden;
   animation: fadeIn var(--duration-medium) var(--ease-standard);
@@ -81,6 +82,19 @@
       var(--color-ink) 0 1px,
       transparent 1px 7px
     );
+}
+
+/* Coin haut-gauche du hero, sous l'encoche sur mobile. */
+.backSlot {
+  position: absolute;
+  top: calc(var(--space-4) + env(safe-area-inset-top, 0px));
+  left: var(--_gutter);
+  z-index: 2;
+}
+@media (min-width: 1024px) {
+  .backSlot {
+    top: calc(var(--space-6) + env(safe-area-inset-top, 0px));
+  }
 }
 
 .content {

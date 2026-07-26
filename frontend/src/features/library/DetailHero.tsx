@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { apiUrl } from '@/api/client';
+import { BackButton } from '@/components/layout/BackButton';
 import styles from './DetailHero.module.css';
 
 function initials(label: string) {
@@ -22,6 +23,7 @@ export function DetailHero({
   actions,
   accent,
   round = false,
+  backFallback,
 }: {
   coverUrl?: string | null;
   label: string;
@@ -31,6 +33,8 @@ export function DetailHero({
   actions?: ReactNode;
   accent?: string | null;
   round?: boolean;
+  /** Destination si la page est ouverte sans historique (lien direct, PWA). */
+  backFallback?: string;
 }) {
   const url = coverUrl ? apiUrl(coverUrl) : null;
   const style = accent
@@ -47,6 +51,9 @@ export function DetailHero({
       )}
       <div className={styles.wash} />
       <div className={styles.fibers} aria-hidden="true" />
+      <div className={styles.backSlot}>
+        <BackButton fallback={backFallback} />
+      </div>
       <div className={styles.content}>
         <div className={`${styles.coverWrap} ${round ? styles.roundWrap : ''}`}>
           <div className={`${styles.cover} ${round ? styles.round : ''}`}>
