@@ -3,6 +3,19 @@ import { Howl } from 'howler';
 import { usePlayerStore } from './usePlayerStore';
 import { apiUrl } from '@/api/client';
 import { statsApi } from '@/api/stats';
+import {
+  primeAudioPool,
+  resumeAudioAnalyser,
+  tapAudioElement,
+} from './audioAnalyser';
+
+/** Élément <audio> interne de Howler (mode html5), pour l'analyse spectrale. */
+function howlNode(howl: Howl): HTMLMediaElement | null {
+  const sounds = (howl as unknown as { _sounds?: { _node?: unknown }[] })
+    ._sounds;
+  const node = sounds?.[0]?._node;
+  return node instanceof HTMLMediaElement ? node : null;
+}
 
 export function useAudioEngine() {
   const howlRef = useRef<Howl | null>(null);
@@ -26,12 +39,16 @@ export function useAudioEngine() {
     howlRef.current?.unload();
     currentIdRef.current = currentTrack.id;
     const url = apiUrl(`/api/v1/stream/${currentTrack.id}`);
+    primeAudioPool(url);
     const howl = new Howl({
       src: [url],
       html5: true,
       volume,
       onloaderror: () => {
         /* offline / CORS */
+      },
+      onplay: () => {
+        tapAudioElement(howlNode(howl), url);
       },
       onend: () => {
         const st = usePlayerStore.getState();
@@ -65,6 +82,7 @@ export function useAudioEngine() {
     if (!h) return;
     if (isPlaying) {
       if (!h.playing()) h.play();
+      resumeAudioAnalyser();
     } else {
       h.pause();
     }
