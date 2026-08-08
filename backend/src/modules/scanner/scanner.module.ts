@@ -12,9 +12,11 @@ import { ScannerController } from './scanner.controller';
 import { ScannerService } from './scanner.service';
 import { MetadataService } from './metadata.service';
 import { CoverExtractorService } from './cover-extractor.service';
+import { CoversModule } from '../covers/covers.module';
 
 @Module({
   imports: [
+    CoversModule,
     TypeOrmModule.forFeature([
       Artist,
       Album,

@@ -18,6 +18,12 @@ export const albumsApi = {
     apiJson<Paginated<Album>>(`/api/v1/albums${qs({ ...q })}`),
   get: (id: string) => apiJson<AlbumDetail>(`/api/v1/albums/${id}`),
   tracks: (id: string) => apiJson<Track[]>(`/api/v1/albums/${id}/tracks`),
+  /** Reclasse des albums en playlists (`isCompilation: true`) ou l'inverse. */
+  setType: (ids: string[], isCompilation: boolean) =>
+    apiJson<{ updated: number; isCompilation: boolean }>(
+      `/api/v1/albums/type`,
+      { method: 'PATCH', body: JSON.stringify({ ids, isCompilation }) },
+    ),
   edit: (id: string, dto: { title?: string; year?: number }) =>
     apiJson<{ id: string; filesWritten: number; totalTracks: number }>(
       `/api/v1/albums/${id}`,

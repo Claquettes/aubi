@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Disc3, ListMusic, Pencil } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { albumsApi } from '@/api/albums';
 import { statsApi } from '@/api/stats';
@@ -13,9 +13,19 @@ import { TrackRow } from '@/features/library/TrackRow';
 import { EditAlbumModal } from '@/features/metadata/EditAlbumModal';
 import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { useAlbumType } from '@/features/library/useAlbumType';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
 import styles from './AlbumPage.module.css';
+
+const heroButtonStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--color-text-secondary)',
+  cursor: 'pointer',
+  display: 'flex',
+  padding: 'var(--space-2)',
+};
 
 export function AlbumPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +39,7 @@ export function AlbumPage() {
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
   const [editing, setEditing] = useState(false);
+  const setType = useAlbumType();
   const queryClient = useQueryClient();
 
   if (isLoading) return <Spinner />;
@@ -96,16 +107,32 @@ export function AlbumPage() {
               type="button"
               onClick={() => setEditing(true)}
               aria-label="Modifier l'album"
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                padding: 'var(--space-2)',
-              }}
+              style={heroButtonStyle}
             >
               <Pencil size={20} />
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setType.mutate({
+                  ids: [album.id],
+                  isCompilation: !album.isCompilation,
+                })
+              }
+              disabled={setType.isPending}
+              aria-label={
+                album.isCompilation
+                  ? 'Remettre dans les albums'
+                  : 'Déplacer dans les playlists'
+              }
+              title={
+                album.isCompilation
+                  ? 'C’est un album, pas une playlist'
+                  : 'C’est une playlist, pas un album'
+              }
+              style={heroButtonStyle}
+            >
+              {album.isCompilation ? <Disc3 size={20} /> : <ListMusic size={20} />}
             </button>
           </>
         }

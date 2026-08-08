@@ -29,7 +29,7 @@ export function TrackRow({
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
   const isActive = currentId === track.id;
-  const selActive = useSelection((s) => s.active);
+  const selActive = useSelection((s) => s.active && s.kind === 'track');
   const selected = useSelection((s) => s.ids.has(track.id));
   const toggleSel = useSelection((s) => s.toggle);
 

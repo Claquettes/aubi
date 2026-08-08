@@ -24,6 +24,7 @@ import { TrackGenre1760000200000 } from './migrations/1760000200000-TrackGenre';
 import { TrackMetadataLocked1760000300000 } from './migrations/1760000300000-TrackMetadataLocked';
 import { AlbumFolderCompilation1760000400000 } from './migrations/1760000400000-AlbumFolderCompilation';
 import { AlbumPlays1760000500000 } from './migrations/1760000500000-AlbumPlays';
+import { AlbumTypeLock1760000600000 } from './migrations/1760000600000-AlbumTypeLock';
 
 config({ path: join(__dirname, '../../.env') });
 
@@ -35,6 +36,7 @@ const migrations = [
   TrackMetadataLocked1760000300000,
   AlbumFolderCompilation1760000400000,
   AlbumPlays1760000500000,
+  AlbumTypeLock1760000600000,
 ];
 
 export default new DataSource({

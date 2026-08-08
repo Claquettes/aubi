@@ -71,6 +71,89 @@
   padding: 3px 9px;
   border-radius: var(--radius-round);
 }
+/* Menu « … » de la vignette : même traitement que le cœur, à gauche. */
+.cardMenu {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-2);
+  left: var(--space-2);
+  display: flex;
+  background: rgb(0 0 0 / 0.55);
+  border: none;
+  border-radius: var(--radius-round);
+  padding: 7px;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+.cardMenu:hover {
+  background: rgb(0 0 0 / 0.72);
+}
+.card:hover .cardMenu,
+.cardMenu:focus-visible {
+  opacity: 1;
+}
+/* Sans survol (tactile), le menu doit rester visible pour être atteignable. */
+@media (hover: none) {
+  .cardMenu {
+    opacity: 1;
+  }
+}
+
+/* Mode sélection d'albums. */
+.cardCheck {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-round);
+  border: 2px solid #fff;
+  background: rgb(0 0 0 / 0.5);
+  color: var(--color-on-accent);
+}
+.cardCheckOn {
+  background: var(--art-action, var(--color-accent));
+  border-color: var(--art-action, var(--color-accent));
+}
+.cardSelected .coverImg {
+  outline: 3px solid var(--art-action, var(--color-accent));
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+/* Entrée d'un menu contextuel (feuille modale). */
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-ink);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.menuItem:hover {
+  background: color-mix(in oklab, var(--color-ink) 6%, transparent);
+}
+.menuItem svg {
+  color: var(--color-ink-muted);
+  flex-shrink: 0;
+}
+
 .cardLike {
   position: absolute;
   z-index: 2;

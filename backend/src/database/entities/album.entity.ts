@@ -34,6 +34,13 @@ export class Album {
   @Column({ name: 'is_compilation', type: 'boolean', default: false })
   isCompilation: boolean;
 
+  /**
+   * Classement décidé à la main dans l'app (album ↔ playlist) : le scan ne
+   * recalcule plus `is_compilation` pour cet album.
+   */
+  @Column({ name: 'is_compilation_locked', type: 'boolean', default: false })
+  isCompilationLocked: boolean;
+
   @Column({ name: 'artist_id', type: 'uuid', nullable: true })
   artistId: string | null;
 

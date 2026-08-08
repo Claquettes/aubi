@@ -18,6 +18,7 @@ import { TrackArtist } from '../../database/entities/track-artist.entity';
 import { slugify } from '../../common/utils/slugify';
 import { MetadataService } from './metadata.service';
 import { CoverExtractorService } from './cover-extractor.service';
+import { CoverResolverService } from '../covers/cover-resolver.service';
 
 const AUDIO_EXT = new Set([
   '.mp3',
@@ -68,6 +69,7 @@ export class ScannerService implements OnModuleInit {
     private readonly trackArtistRepo: Repository<TrackArtist>,
     private readonly metadataService: MetadataService,
     private readonly coverExtractor: CoverExtractorService,
+    private readonly coverResolver: CoverResolverService,
   ) {}
 
   private get musicPath(): string {
@@ -169,6 +171,8 @@ export class ScannerService implements OnModuleInit {
       }
       await this.markMissingDeleted(seen);
       await this.reconcileAlbums();
+      // Les pochettes de repli (concert → artiste) ont pu changer.
+      this.coverResolver.invalidate();
       const count = await this.trackRepo.count({
         where: { deletedAt: IsNull() },
       });
@@ -194,7 +198,8 @@ export class ScannerService implements OnModuleInit {
    * Recale les albums après un scan :
    *  1. artiste de l'album = artiste le plus fréquent de ses pistes (respecte
    *     les éditions manuelles, ex. « soeur ») ;
-   *  2. `is_compilation` = dossier à ≥ 8 artistes distincts (→ collection) ;
+   *  2. `is_compilation` = dossier à ≥ 8 artistes distincts (→ collection),
+   *     sauf si l'album a été classé à la main (`is_compilation_locked`) ;
    *  3. purge des albums orphelins (issus de l'ancienne clé titre×artiste).
    */
   private async reconcileAlbums(): Promise<void> {
@@ -218,6 +223,7 @@ export class ScannerService implements OnModuleInit {
         GROUP BY t.album_id
       ) s
       WHERE a.id = s.album_id AND a.is_compilation IS DISTINCT FROM (s.cnt >= 8)
+        AND a.is_compilation_locked = false
     `);
     // Retire les likes pointant un album devenu orphelin, puis purge les albums
     // sans aucune piste vivante (anciens doublons titre×artiste).

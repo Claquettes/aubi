@@ -246,6 +246,23 @@ export class AlbumsService {
     };
   }
 
+  /**
+   * Reclasse des albums en playlists (ou l'inverse). Le scanner range en
+   * « collection » tout dossier à ≥ 8 artistes : quand il se trompe, ce choix
+   * manuel prend le dessus et est verrouillé contre les prochains scans.
+   */
+  async setType(ids: string[], isCompilation: boolean) {
+    const result = await this.albumRepo
+      .createQueryBuilder()
+      .update(Album)
+      .set({ isCompilation, isCompilationLocked: true })
+      .whereInIds(ids)
+      .execute();
+    const updated = result.affected ?? 0;
+    if (updated === 0) throw new NotFoundException('Aucun album trouvé');
+    return { updated, isCompilation };
+  }
+
   async findTracks(albumId: string) {
     const a = await this.albumRepo.findOne({ where: { id: albumId } });
     if (!a) throw new NotFoundException('Album not found');
