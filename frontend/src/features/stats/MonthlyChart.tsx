@@ -1,43 +1,39 @@
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
-import type { DailyStat } from '@/types/api';
+import type { MonthlyStat } from '@/types/api';
 import { axisProps, ChartTooltip, gridProps } from './chartTheme';
-import { dayLabel, duration } from './statsFormat';
+import { duration, int, monthLabel } from './statsFormat';
 
-/** Minutes écoutées par jour. Une seule série : pas de légende, le titre suffit. */
-export function ListeningChart({ data }: { data: DailyStat[] }) {
+/** Volume écouté mois par mois — une série, barres à extrémité arrondie. */
+export function MonthlyChart({ data }: { data: MonthlyStat[] }) {
   const chartData = data.map((d) => ({
-    day: d.day,
-    short: `${Number(d.day.slice(8))}/${Number(d.day.slice(5, 7))}`,
+    month: d.month,
+    label: monthLabel(d.month),
     minutes: Math.round(d.totalMs / 60000),
     ms: d.totalMs,
     plays: d.playCount,
+    tracks: d.distinctTracks,
   }));
 
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <AreaChart
+      <BarChart
         data={chartData}
         margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+        barCategoryGap="22%"
       >
-        <defs>
-          <linearGradient id="listenGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.42} />
-            <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
-          </linearGradient>
-        </defs>
         <CartesianGrid {...gridProps} />
-        <XAxis dataKey="short" {...axisProps} minTickGap={28} />
+        <XAxis dataKey="label" {...axisProps} minTickGap={8} />
         <YAxis {...axisProps} width={40} allowDecimals={false} />
         <Tooltip
-          cursor={{ stroke: 'var(--color-hairline-strong)', strokeWidth: 1 }}
+          cursor={{ fill: 'var(--chart-empty)' }}
           content={({ active, payload }) => {
             const p = payload?.[0]?.payload as
               | (typeof chartData)[number]
@@ -45,7 +41,7 @@ export function ListeningChart({ data }: { data: DailyStat[] }) {
             return (
               <ChartTooltip
                 active={active && !!p}
-                label={p ? dayLabel(p.day) : ''}
+                label={p ? monthLabel(p.month) : ''}
                 rows={
                   p
                     ? [
@@ -54,10 +50,8 @@ export function ListeningChart({ data }: { data: DailyStat[] }) {
                           value: duration(p.ms),
                           color: 'var(--chart-1)',
                         },
-                        {
-                          name: 'Titres joués',
-                          value: String(p.plays),
-                        },
+                        { name: 'Lectures', value: int(p.plays) },
+                        { name: 'Titres différents', value: int(p.tracks) },
                       ]
                     : []
                 }
@@ -65,15 +59,13 @@ export function ListeningChart({ data }: { data: DailyStat[] }) {
             );
           }}
         />
-        <Area
-          type="monotone"
+        <Bar
           dataKey="minutes"
-          stroke="var(--chart-1)"
-          fill="url(#listenGrad)"
-          strokeWidth={2}
-          activeDot={{ r: 4, strokeWidth: 0, fill: 'var(--chart-1)' }}
+          fill="var(--chart-1)"
+          radius={[4, 4, 0, 0]}
+          maxBarSize={38}
         />
-      </AreaChart>
+      </BarChart>
     </ResponsiveContainer>
   );
 }

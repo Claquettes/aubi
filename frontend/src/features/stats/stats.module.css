@@ -1,45 +1,118 @@
-/* KPI façon page de chiffres imprimée : filets, grands nombres, pas de cartes. */
+/* ══════════════════════════════════════════════════════════════════════════
+   Page Statistiques — mise en page « page de chiffres imprimée » : filets,
+   grands nombres, aucune carte flottante. Les graphes empruntent la palette
+   data-viz des tokens (var(--chart-*)), jamais une couleur littérale.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Contrôles (période + onglets) ───────────────────────────────────────── */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-round);
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-paper) 70%, transparent);
+}
+.segment {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.segment:hover {
+  color: var(--color-ink);
+}
+.segmentOn {
+  background: var(--art-action, var(--color-accent));
+  color: var(--color-on-accent);
+}
+.segment:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-hairline);
+  margin-bottom: var(--space-8);
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: var(--space-3) 0;
+  font-size: var(--step--1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.tab:hover {
+  color: var(--color-ink);
+}
+.tabOn {
+  color: var(--color-ink);
+  border-bottom-color: var(--art-action, var(--color-accent));
+}
+.tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── KPI ─────────────────────────────────────────────────────────────────── */
+/* Chaque tuile porte ses filets haut/gauche et déborde d'1px ; le conteneur
+   rogne ceux de la première ligne et de la première colonne. Résultat : une
+   grille de filets correcte pour n'importe quel nombre de colonnes, sans
+   arithmétique nth-child (impossible avec une variable CSS). */
 .tiles {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-bottom: var(--space-12);
+  margin-bottom: var(--space-10);
   border-top: 1px solid var(--color-hairline);
   border-bottom: 1px solid var(--color-hairline);
+  overflow: hidden;
 }
 @media (min-width: 720px) {
   .tiles {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(var(--tile-columns, 4), minmax(0, 1fr));
   }
 }
 .tile {
-  padding: var(--space-5) var(--space-4);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
   border-left: 1px solid var(--color-hairline);
-}
-.tile:first-child {
-  border-left: none;
-}
-/* Mobile : 2 colonnes, filets internes cohérents, dernier KPI sur toute la largeur. */
-@media (max-width: 719px) {
-  .tile:nth-child(odd) {
-    border-left: none;
-  }
-  .tile:nth-child(n + 3) {
-    border-top: 1px solid var(--color-hairline);
-  }
-  .tile:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
+  border-top: 1px solid var(--color-hairline);
+  margin-left: -1px;
+  margin-top: -1px;
+  min-width: 0;
 }
 .tileValue {
   font-family: var(--font-display);
   font-weight: var(--weight-regular);
-  font-size: clamp(var(--step-4), 4vw, var(--step-6));
-  line-height: 0.9;
+  font-size: clamp(var(--step-3), 3.2vw, var(--step-5));
+  line-height: 0.95;
   color: var(--color-ink);
   font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 .tileLabel {
   font-size: var(--step--2);
@@ -48,9 +121,19 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
+.tileHint {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  opacity: 0.85;
+}
 
+/* ── Blocs ───────────────────────────────────────────────────────────────── */
 .block {
   margin-bottom: var(--space-12);
+  min-width: 0;
+}
+.blockHead {
+  margin-bottom: var(--space-5);
 }
 .blockTitle {
   font-family: var(--font-display);
@@ -58,71 +141,386 @@
   font-size: var(--step-2);
   letter-spacing: var(--tracking-tight);
   color: var(--color-ink);
-  margin-bottom: var(--space-5);
 }
-.charts {
+.blockCaption {
+  margin: var(--space-1) 0 0;
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+}
+.twoCol {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1.6fr 1fr;
   gap: var(--space-8);
   align-items: start;
 }
 @media (max-width: 900px) {
-  .charts {
+  .twoCol {
     grid-template-columns: 1fr;
   }
 }
+.footnote {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  border-top: 1px solid var(--color-hairline);
+  padding-top: var(--space-4);
+}
 
-.topRow {
-  display: grid;
-  grid-template-columns: 28px 44px 1fr auto;
+/* ── Infobulles & légendes ───────────────────────────────────────────────── */
+.tooltip {
+  background: var(--color-paper-high);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-paper-1);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--step--2);
+  min-width: 140px;
+}
+.tooltipLabel {
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink);
+  margin-bottom: var(--space-1);
+}
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-ink-soft);
+}
+.tooltipSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+.tooltipName {
+  flex: 1;
+}
+.tooltipValue {
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--step--2);
+  color: var(--color-ink-soft);
+}
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+.legendLabel {
+  color: var(--color-ink);
+}
+.legendValue {
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Donut ───────────────────────────────────────────────────────────────── */
+.donutWrap {
+  position: relative;
+}
+.donutCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+.donutValue {
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  color: var(--color-ink);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.donutCaption {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Classements en barres ───────────────────────────────────────────────── */
+.rankList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.rankRow {
+  border-bottom: 1px solid var(--color-hairline);
+}
+/* Flex plutôt que grid : le rang et la pochette sont optionnels, la colonne
+   de valeur doit rester collée à droite dans toutes les combinaisons. */
+.rankLink {
+  display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2);
-  border-bottom: 1px solid var(--color-hairline);
+  width: 100%;
+  padding: var(--space-3) var(--space-2);
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
   transition: background var(--duration-fast) var(--ease-standard);
 }
-.topRow:hover {
+.rankLink:hover {
   background: color-mix(in oklab, var(--color-ink) 4%, transparent);
 }
-.topRank {
+.rankLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.rank {
+  flex: none;
+  width: 26px;
   font-family: var(--font-display);
   font-size: var(--step-1);
   color: var(--color-ink-muted);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.topMeta {
+.rankMeta {
+  flex: 1;
   min-width: 0;
 }
-.topTitle {
+.rankLabel {
   font-size: 1.0625rem;
   color: var(--color-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.topSub {
-  font-size: var(--step--1);
+.rankSub {
+  font-size: var(--step--2);
   color: var(--color-ink-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.topCount {
+.rankTrack {
+  margin-top: var(--space-2);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--chart-empty);
+  overflow: hidden;
+}
+.rankBar {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--chart-1);
+}
+.rankValue {
   font-size: var(--step--1);
   color: var(--color-ink-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Grille d'albums ─────────────────────────────────────────────────────── */
+.albumGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-6);
+}
+.albumCard {
+  display: block;
+  color: inherit;
+  min-width: 0;
+}
+.albumCard:hover .albumTitle {
+  color: var(--art-action, var(--color-accent));
+}
+.albumCover {
+  position: relative;
+  aspect-ratio: 1;
+  margin-bottom: var(--space-3);
+}
+.albumRank {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-ink);
+  background: color-mix(in oklab, var(--color-paper) 82%, transparent);
+  backdrop-filter: blur(6px);
+  font-variant-numeric: tabular-nums;
+}
+.albumTitle {
+  font-size: var(--step-0);
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+.albumSub {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.albumStats {
+  font-size: var(--step--1);
+  color: var(--color-ink-soft);
+  margin-top: var(--space-1);
+}
+.albumStats strong {
+  font-weight: var(--weight-semibold);
+  color: var(--color-ink);
+}
+.albumMeter {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--chart-empty);
+  overflow: hidden;
+  margin: var(--space-2) 0 var(--space-1);
+}
+.albumMeterFill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--chart-1);
+}
+
+/* ── Faits marquants ─────────────────────────────────────────────────────── */
+.recordGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  border-top: 1px solid var(--color-hairline);
+  border-bottom: 1px solid var(--color-hairline);
+  overflow: hidden;
+}
+.recordCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4);
+  border-left: 1px solid var(--color-hairline);
+  border-top: 1px solid var(--color-hairline);
+  margin-left: -1px;
+  margin-top: -1px;
+  min-width: 0;
+}
+.recordKicker {
+  font-size: var(--step--2);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--art-action, var(--color-accent));
+}
+.recordValue {
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  line-height: 1;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.recordDetail {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-normal);
+}
+
+/* ── Dernières écoutes ───────────────────────────────────────────────────── */
+.recentList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0 var(--space-6);
+}
+.recentRow {
+  border-bottom: 1px solid var(--color-hairline);
+}
+.recentLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.recentLink:hover {
+  background: color-mix(in oklab, var(--color-ink) 4%, transparent);
+}
+.recentLink:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.recentTime {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+/* ── Barre de répartition ────────────────────────────────────────────────── */
+.propBar {
+  display: flex;
+  gap: 2px; /* filet de fond entre segments : ils ne se touchent jamais */
+  height: 18px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.propSeg {
+  height: 100%;
+  min-width: 3px;
+}
+
+/* ── Calendrier d'activité ───────────────────────────────────────────────── */
+.heatScroll {
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+  scrollbar-width: thin;
+}
+.heatInner {
+  display: inline-block;
+  min-width: max-content;
+}
+.heatMonths {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 3px;
+}
+.heatMonthCell {
+  width: 11px;
+  font-size: 9px;
+  color: var(--color-ink-muted);
+  text-align: left;
+  overflow: visible;
+  white-space: nowrap;
+}
 .heatmap {
   display: flex;
   gap: 3px;
-  overflow-x: auto;
-  padding-bottom: var(--space-2);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 .heatWeek {
   display: flex;
@@ -130,7 +528,61 @@
   gap: 3px;
 }
 .heatCell {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   border-radius: 2px;
+}
+
+/* ── Semaine type (jour × heure) ─────────────────────────────────────────── */
+.punchWrap {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+/* Cases plafonnées : au-delà de ~26px la grille se lit comme un damier
+   décoratif plutôt que comme un graphe. */
+.punchGrid {
+  display: grid;
+  grid-template-columns: 34px repeat(24, minmax(14px, 26px));
+  justify-content: start;
+  gap: 3px;
+  min-width: 420px;
+}
+.punchHourLabel {
+  font-size: 9px;
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+.punchDayLabel {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  display: flex;
+  align-items: center;
+}
+.punchCell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  min-height: 14px;
+}
+
+/* ── Échelle partagée (heatmap + punchcard) ──────────────────────────────── */
+.scaleRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--space-3);
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  flex-wrap: wrap;
+}
+.scaleCell {
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+}
+.scaleLabel {
+  margin: 0 var(--space-1);
+}
+.scaleSpacer {
+  flex: 1;
+  min-width: var(--space-4);
 }

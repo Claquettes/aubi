@@ -140,12 +140,39 @@ export interface PlaylistDetail extends Playlist {
   tracks: Track[];
 }
 
+export interface SectionSplit {
+  section: string;
+  playCount: number;
+  totalMs: number;
+}
+
 export interface StatsOverview {
+  // Bibliothèque
   totalTracks: number;
+  totalAlbums: number;
+  totalArtists: number;
+  libraryDurationMs: number;
+  librarySizeBytes: number;
+  // Écoute sur la période
   totalListenedMs: number;
   totalPlayEvents: number;
   totalAlbumPlays: number;
+  completedRate: number;
+  distinctTracksPlayed: number;
+  distinctAlbumsPlayed: number;
+  distinctArtistsPlayed: number;
+  libraryCoverage: number;
+  activeDays: number;
+  avgDailyMs: number;
+  firstPlayAt: string | null;
+  lastPlayAt: string | null;
+  // Favoris
+  likedTracks: number;
+  likedAlbums: number;
+  likedArtists: number;
+  // Répartition
   mostPlayedSection: string;
+  bySection: SectionSplit[];
   currentStreak: number;
   longestStreak: number;
 }
@@ -154,12 +181,118 @@ export interface TopTrack {
   track: Track;
   playCount: number;
   totalListenedMs: number;
+  lastPlayedAt: string | null;
+}
+
+export interface TopArtist {
+  artist: { id: string; name: string; coverUrl: string | null };
+  playCount: number;
+  totalListenedMs: number;
+  distinctTracks: number;
+  libraryTracks: number;
+  lastPlayedAt: string | null;
+}
+
+export interface TopAlbum {
+  album: {
+    id: string;
+    title: string;
+    year: number | null;
+    artist: ArtistRef | null;
+    coverUrl: string | null;
+    trackCount: number;
+  };
+  playCount: number;
+  totalListenedMs: number;
+  distinctTracks: number;
+  albumPlayCount: number;
+  /** Part des titres de l'album réellement écoutés sur la période (0–1). */
+  coverage: number;
+  lastPlayedAt: string | null;
 }
 
 export interface HeatmapCell {
   date: string;
   totalMs: number;
+  playCount: number;
+  /** 0 = rien, 1–5 = quintiles d'activité. */
   intensity: number;
+}
+
+export interface MonthlyStat {
+  month: string;
+  playCount: number;
+  totalMs: number;
+  distinctTracks: number;
+  distinctArtists: number;
+  newTracks: number;
+  newArtists: number;
+  addedTracks: number;
+}
+
+export interface ListeningPatterns {
+  byHour: { hour: number; playCount: number; totalMs: number }[];
+  byWeekday: { weekday: number; playCount: number; totalMs: number }[];
+  punchcard: { weekday: number; hour: number; playCount: number }[];
+  slots: { key: string; label: string; playCount: number; totalMs: number }[];
+  peakHour: number | null;
+}
+
+export interface StatsRecords {
+  bestDay: { date: string; totalMs: number; playCount: number } | null;
+  bestMonth: { month: string; totalMs: number; playCount: number } | null;
+  longestSession: {
+    startedAt: string | null;
+    endedAt: string | null;
+    playCount: number;
+    totalMs: number;
+  } | null;
+  obsession: {
+    trackId: string;
+    title: string;
+    artistName: string | null;
+    date: string;
+    playCount: number;
+  } | null;
+  discoveredTracks: number;
+  discoveredArtists: number;
+}
+
+export interface RecentPlay {
+  playedAt: string;
+  completed: boolean;
+  track: Track;
+}
+
+export interface LibraryStats {
+  bySection: {
+    section: string;
+    trackCount: number;
+    totalMs: number;
+    sizeBytes: number;
+  }[];
+  byFormat: {
+    format: string;
+    trackCount: number;
+    totalMs: number;
+    sizeBytes: number;
+  }[];
+  byGenre: { genre: string; trackCount: number; totalMs: number }[];
+  byDecade: { decade: number; albumCount: number; trackCount: number }[];
+  byQuality: { bucket: string; trackCount: number }[];
+  durations: {
+    avgMs: number;
+    medianMs: number;
+    maxMs: number;
+    minMs: number;
+  };
+  topArtistsByTracks: {
+    artist: { id: string; name: string; coverUrl: string | null };
+    trackCount: number;
+    albumCount: number;
+  }[];
+  neverPlayedTracks: number;
+  neverPlayedAlbums: number;
 }
 
 export interface DailyStat {

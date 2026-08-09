@@ -9,15 +9,22 @@ import {
 import { StatsService } from './stats.service';
 import { PlayEventDto } from './dto/play-event.dto';
 import { AlbumPlayDto } from './dto/album-play.dto';
-import { DailyQueryDto, TopQueryDto } from './dto/stats-query.dto';
+import {
+  DailyQueryDto,
+  MonthlyQueryDto,
+  RangeQueryDto,
+  RecentQueryDto,
+  TopQueryDto,
+  TzQueryDto,
+} from './dto/stats-query.dto';
 
 @Controller('stats')
 export class StatsController {
   constructor(private readonly stats: StatsService) {}
 
   @Get('overview')
-  overview() {
-    return this.stats.overview();
+  overview(@Query() query: RangeQueryDto) {
+    return this.stats.overview(query);
   }
 
   @Get('top-tracks')
@@ -40,9 +47,37 @@ export class StatsController {
     return this.stats.daily(query);
   }
 
+  @Get('monthly')
+  monthly(@Query() query: MonthlyQueryDto) {
+    return this.stats.monthly(query);
+  }
+
   @Get('heatmap')
-  heatmap() {
-    return this.stats.heatmap();
+  heatmap(@Query() query: TzQueryDto) {
+    return this.stats.heatmap(query.tz);
+  }
+
+  /** Répartition des écoutes par heure et par jour de la semaine. */
+  @Get('patterns')
+  patterns(@Query() query: RangeQueryDto) {
+    return this.stats.patterns(query);
+  }
+
+  /** Faits marquants : meilleur jour, plus longue session, obsession du moment. */
+  @Get('records')
+  records(@Query() query: RangeQueryDto) {
+    return this.stats.records(query);
+  }
+
+  @Get('recent')
+  recent(@Query() query: RecentQueryDto) {
+    return this.stats.recent(query);
+  }
+
+  /** Composition du catalogue (formats, décennies, genres) — hors écoutes. */
+  @Get('library')
+  library() {
+    return this.stats.library();
   }
 
   @Post('play')

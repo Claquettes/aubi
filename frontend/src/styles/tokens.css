@@ -48,6 +48,27 @@
   --paper-noise-opacity: 0.055;
   --paper-fiber-opacity: 0.035;
 
+  /* ── Data-viz ──
+     Palette catégorielle validée sur le fond sombre : bande de clarté OKLCH
+     0,48–0,67, chroma ≥ 0,10, séparation daltonisme (protan/deutan) ΔE 13 sur
+     les paires voisines, contraste ≥ 3:1. L'ordre des teintes EST le mécanisme
+     de sécurité — on assigne dans l'ordre, jamais en boucle. Les trois
+     premières passent aussi le test « toutes paires » (nuage, camembert).
+     Rampe séquentielle : une seule teinte, clarté monotone, du faible au fort. */
+  --chart-1: #a572f1;
+  --chart-2: #00aa8e;
+  --chart-3: #ec6028;
+  --chart-4: #d85cb5;
+  --chart-5: #00af50;
+  --chart-6: #00a0d3;
+  --heat-1: #62359c;
+  --heat-2: #7b50b9;
+  --heat-3: #966cd7;
+  --heat-4: #b58bf9;
+  --heat-5: #ceb5ff;
+  --chart-grid: rgb(165 173 203 / 0.16);
+  --chart-empty: rgb(165 173 203 / 0.1);
+
   /* ── Couleurs dérivées de la pochette (posées par appTheme, sinon accent) ── */
   --surface-dynamic: color-mix(
     in oklab,
@@ -247,6 +268,22 @@
   --color-info: #245fbd;
   --paper-noise-opacity: 0.035;
   --paper-fiber-opacity: 0.025;
+
+  /* Data-viz clair : pas un simple inversement, des pas revalidés contre le
+     fond papier (bande 0,43–0,77, ΔE daltonisme 12,1, contraste ≥ 3:1). */
+  --chart-1: #8d59d5;
+  --chart-2: #008f77;
+  --chart-3: #ce4700;
+  --chart-4: #bd429c;
+  --chart-5: #009342;
+  --chart-6: #0086b1;
+  --heat-1: #b688fe;
+  --heat-2: #9f71e4;
+  --heat-3: #885acb;
+  --heat-4: #7141b0;
+  --heat-5: #5b2896;
+  --chart-grid: rgb(76 79 105 / 0.14);
+  --chart-empty: rgb(76 79 105 / 0.08);
 
   --shadow-paper-1: 0 1px 0 rgb(255 255 255 / 0.6), 0 8px 20px rgb(52 51 61 / 0.1);
   --shadow-paper-2: 0 1px 0 rgb(255 255 255 / 0.7),
