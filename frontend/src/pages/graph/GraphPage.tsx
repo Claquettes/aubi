@@ -176,7 +176,7 @@ export function GraphPage() {
           <p className={styles.hint}>
             {layout.nodes.length} artistes, {layout.edges.length} collaborations,{' '}
             {layout.clusterCount} groupes. Taille du point = nombre de titres,
-            épaisseur du trait = collaborations partagées.
+            épaisseur du trait = collaborations partagées, teinte = réseau.
           </p>
         </>
       )}

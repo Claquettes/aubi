@@ -9,29 +9,53 @@ import {
   Settings,
   Waypoints,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
-function L({
-  to,
-  icon,
-  children,
-}: {
+interface Item {
   to: string;
-  icon: ReactNode;
-  children: ReactNode;
-}) {
+  label: string;
+  icon: LucideIcon;
+}
+
+/** Rubriques : la barre se lit comme un sommaire, pas comme une liste plate. */
+const SECTIONS: { title: string; items: Item[] }[] = [
+  {
+    title: 'Bibliothèque',
+    items: [
+      // Pas de `end` : la rubrique reste allumée sur /music/albums/… et /music/artists/…
+      { to: '/music', label: 'Musique', icon: Music2 },
+      { to: '/concerts', label: 'Concerts', icon: Mic2 },
+      { to: '/audiobooks', label: 'Livres audio', icon: BookOpen },
+    ],
+  },
+  {
+    title: 'Ma sélection',
+    items: [
+      { to: '/playlists', label: 'Playlists', icon: ListMusic },
+      { to: '/likes', label: 'Favoris', icon: Heart },
+    ],
+  },
+  {
+    title: 'Explorer',
+    items: [
+      { to: '/stats', label: 'Statistiques', icon: BarChart2 },
+      { to: '/graph', label: 'Graphe', icon: Waypoints },
+    ],
+  },
+];
+
+function Link({ to, label, icon: Icon }: Item) {
   return (
     <NavLink
       to={to}
-      end={to === '/music'}
       className={({ isActive }) =>
         `${styles.link} ${isActive ? styles.active : ''}`
       }
     >
-      {icon}
-      <span>{children}</span>
+      <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
+      <span>{label}</span>
     </NavLink>
   );
 }
@@ -39,35 +63,35 @@ function L({
 export function Sidebar() {
   return (
     <aside className={styles.aside}>
-      <div className={styles.brand}>aubi</div>
-      <L to="/music" icon={<Music2 size={20} strokeWidth={1.6} />}>
-        Musique
-      </L>
-      <L to="/concerts" icon={<Mic2 size={20} strokeWidth={1.6} />}>
-        Concerts
-      </L>
-      <L to="/audiobooks" icon={<BookOpen size={20} strokeWidth={1.6} />}>
-        Livres audio
-      </L>
-      <L to="/playlists" icon={<ListMusic size={20} strokeWidth={1.6} />}>
-        Playlists
-      </L>
-      <L to="/likes" icon={<Heart size={20} strokeWidth={1.6} />}>
-        Favoris
-      </L>
-      <L to="/stats" icon={<BarChart2 size={20} strokeWidth={1.6} />}>
-        Statistiques
-      </L>
-      <L to="/graph" icon={<Waypoints size={20} strokeWidth={1.6} />}>
-        Graphe
-      </L>
-      <div className={styles.spacer} />
-      <L to="/search" icon={<Search size={20} strokeWidth={1.6} />}>
-        Recherche
-      </L>
-      <L to="/settings" icon={<Settings size={20} strokeWidth={1.6} />}>
-        Paramètres
-      </L>
+      <NavLink to="/music" end className={styles.brand}>
+        <span className={styles.wordmark}>aubi</span>
+        <span className={styles.tagline}>bibliothèque personnelle</span>
+      </NavLink>
+
+      <NavLink
+        to="/search"
+        className={({ isActive }) =>
+          `${styles.search} ${isActive ? styles.searchActive : ''}`
+        }
+      >
+        <Search size={16} strokeWidth={1.75} aria-hidden="true" />
+        <span>Rechercher…</span>
+      </NavLink>
+
+      <nav className={styles.nav} aria-label="Navigation principale">
+        {SECTIONS.map((section) => (
+          <div key={section.title} className={styles.section}>
+            <p className={styles.eyebrow}>{section.title}</p>
+            {section.items.map((item) => (
+              <Link key={item.to} {...item} />
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      <div className={styles.foot}>
+        <Link to="/settings" label="Paramètres" icon={Settings} />
+      </div>
     </aside>
   );
 }

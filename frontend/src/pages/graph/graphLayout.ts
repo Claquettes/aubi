@@ -17,8 +17,10 @@ import type { GraphData } from '@/types/api';
 /*  sans lien pour les retenir) et tout devient minuscule une fois cadré.      */
 /*  On procède donc en deux temps :                                           */
 /*    1. chaque composante connexe est simulée séparément, bien compacte ;    */
-/*    2. les composantes sont rangées comme des vignettes sur une planche.    */
-/*  Résultat : densité homogène, zéro trou, lisible même sur un téléphone.    */
+/*    2. les composantes sont empilées en spirale autour du centre — les plus */
+/*       gros amas au milieu, les duos et les solitaires comblent les creux.  */
+/*  Résultat : une constellation, pas une grille : rien n'est aligné, la      */
+/*  matière est au centre et la densité reste homogène jusqu'aux bords.       */
 /* -------------------------------------------------------------------------- */
 
 export interface LayoutNode {
@@ -29,6 +31,8 @@ export interface LayoutNode {
   degree: number;
   /** Index des voisins dans `nodes`. */
   neighbors: number[];
+  /** Réseau d'appartenance : donne sa teinte au nœud et à ses liens. */
+  cluster: number;
   /** Rayon du disque, en unités « monde ». */
   r: number;
   /** Poids visuel : sert à prioriser les étiquettes affichées. */
@@ -59,10 +63,13 @@ interface SimLink extends SimulationLinkDatum<SimNode> {
   weight: number;
 }
 
+const TAU = Math.PI * 2;
+/** Angle d'or : deux valeurs consécutives ne se ressemblent jamais. */
+const GOLDEN_ANGLE = 2.399963229728653;
 /** Marge réservée sous chaque nœud pour son étiquette. */
 const LABEL_PAD = 22;
 /** Respiration entre deux composantes : de la place pour poser les noms. */
-const GAP = 48;
+const GAP = 30;
 
 function nodeRadius(trackCount: number, degree: number) {
   const r = 5 + Math.sqrt(Math.max(trackCount, 0)) * 2.4 + Math.min(degree, 8) * 0.7;
@@ -188,78 +195,167 @@ function layoutComponent(
   });
 }
 
-/** Range les composantes en étagères, comme des vignettes sur une planche. */
-function packComponents(
+/** Fait pivoter une composante autour de son barycentre. */
+function rotateComponent(
+  members: number[],
+  nodes: LayoutNode[],
+  angle: number,
+) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  for (const i of members) {
+    const n = nodes[i];
+    const x = n.x * cos - n.y * sin;
+    const y = n.x * sin + n.y * cos;
+    n.x = x;
+    n.y = y;
+  }
+}
+
+/** Rayon d'une composante autour de son barycentre, étiquette comprise. */
+function componentRadius(members: number[], nodes: LayoutNode[]) {
+  let r = 0;
+  for (const i of members) {
+    const n = nodes[i];
+    // On réserve la place du nom : deux amas voisins ne doivent pas se voler
+    // leurs étiquettes.
+    const reach = Math.max(labelWidth(n.name) / 2, n.r + LABEL_PAD);
+    r = Math.max(r, Math.hypot(n.x, n.y) + reach);
+  }
+  return Math.max(r, 14);
+}
+
+/**
+ * Empile les composantes en spirale autour du centre : la plus grosse au
+ * milieu, les suivantes se posent dans le premier creux libre en tournant
+ * autour. Aucune ligne, aucune colonne — un amas, pas un tableau.
+ *
+ * @param aspect Format visé (largeur / hauteur) : la spirale est aplatie pour
+ *   que l'ensemble épouse la zone de dessin et gagne du zoom.
+ */
+function packClusters(
   components: number[][],
   nodes: LayoutNode[],
   aspect: number,
 ) {
-  const boxes = components.map((members) => {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-    for (const i of members) {
-      const n = nodes[i];
-      // On réserve la place de l'étiquette : deux composantes voisines ne
-      // doivent pas se voler leurs noms.
-      const halfLabel = Math.max(n.r, labelWidth(n.name) / 2);
-      minX = Math.min(minX, n.x - halfLabel);
-      minY = Math.min(minY, n.y - n.r);
-      maxX = Math.max(maxX, n.x + halfLabel);
-      maxY = Math.max(maxY, n.y + n.r + LABEL_PAD);
-    }
-    return { members, minX, minY, w: maxX - minX, h: maxY - minY };
+  const items = components.map((members) => ({
+    members,
+    r: componentRadius(members, nodes),
+  }));
+  // Les gros amas d'abord : ils prennent le centre, les duos et les artistes
+  // solitaires viennent ensuite combler les creux du pourtour.
+  items.sort((a, b) => b.r - a.r);
+
+  const stretchX = Math.sqrt(aspect);
+  const stretchY = 1 / Math.sqrt(aspect);
+
+  /* Index spatial : sans lui, chaque position candidate serait confrontée à
+     tous les amas déjà posés et le rangement deviendrait quadratique — une
+     grosse bibliothèque mettait plusieurs dizaines de secondes à s'afficher.
+     Les quelques amas trop larges pour la grille sont testés à part. */
+  type Disc = { x: number; y: number; r: number };
+  const median = items[Math.floor(items.length / 2)]?.r ?? 40;
+  const cell = Math.max(64, median * 2);
+  const grid = new Map<string, Disc[]>();
+  const oversized: Disc[] = [];
+
+  const cellsOf = (x: number, y: number, reach: number) => ({
+    x0: Math.floor((x - reach) / cell),
+    x1: Math.floor((x + reach) / cell),
+    y0: Math.floor((y - reach) / cell),
+    y1: Math.floor((y + reach) / cell),
   });
 
-  // Les gros amas d'abord : ils donnent le rythme de la planche.
-  boxes.sort((a, b) => b.h * b.w - a.h * a.w);
-
-  const totalArea = boxes.reduce((sum, b) => sum + (b.w + GAP) * (b.h + GAP), 0);
-  const widest = boxes.reduce((m, b) => Math.max(m, b.w), 0);
-  const base = Math.sqrt(totalArea * aspect);
-
-  const shelve = (targetW: number) => {
-    const slots: { x: number; y: number }[] = [];
-    let cursorX = 0;
-    let cursorY = 0;
-    let rowHeight = 0;
-    let usedW = 0;
-    for (const box of boxes) {
-      if (cursorX > 0 && cursorX + box.w > targetW) {
-        cursorX = 0;
-        cursorY += rowHeight + GAP;
-        rowHeight = 0;
-      }
-      slots.push({ x: cursorX, y: cursorY });
-      cursorX += box.w + GAP;
-      usedW = Math.max(usedW, cursorX - GAP);
-      rowHeight = Math.max(rowHeight, box.h);
+  const remember = (disc: Disc) => {
+    if (disc.r > cell * 3) {
+      oversized.push(disc);
+      return;
     }
-    return { slots, w: usedW, h: cursorY + rowHeight };
+    const c = cellsOf(disc.x, disc.y, disc.r);
+    for (let cx = c.x0; cx <= c.x1; cx++) {
+      for (let cy = c.y0; cy <= c.y1; cy++) {
+        const key = `${cx}:${cy}`;
+        const bucket = grid.get(key);
+        if (bucket) bucket.push(disc);
+        else grid.set(key, [disc]);
+      }
+    }
   };
 
-  // On essaie plusieurs largeurs de planche et on garde celle dont le format
-  // colle le mieux à la zone de dessin : moins de vide, donc plus de zoom.
-  let best: ReturnType<typeof shelve> | null = null;
-  let bestErr = Infinity;
-  for (const m of [0.55, 0.7, 0.85, 1, 1.15, 1.35, 1.6, 2, 2.6]) {
-    const packed = shelve(Math.max(widest, base * m));
-    const err = Math.abs(Math.log(packed.w / Math.max(packed.h, 1) / aspect));
-    if (err < bestErr) {
-      bestErr = err;
-      best = packed;
-    }
-  }
-  if (!best) return;
-  const packed = best;
+  const hits = (d: Disc, x: number, y: number, r: number) => {
+    const need = d.r + r + GAP;
+    const dx = x - d.x;
+    const dy = y - d.y;
+    return dx * dx + dy * dy < need * need;
+  };
 
-  boxes.forEach((box, i) => {
-    const dx = packed.slots[i].x - box.minX;
-    const dy = packed.slots[i].y - box.minY;
-    for (const m of box.members) {
-      nodes[m].x += dx;
-      nodes[m].y += dy;
+  /** La place est-elle libre pour un amas de rayon `r` centré en (x, y) ? */
+  const free = (x: number, y: number, r: number) => {
+    for (const d of oversized) if (hits(d, x, y, r)) return false;
+    // Un disque est rangé dans toutes les cases que couvre sa boîte : chercher
+    // dans celles de la boîte élargie du candidat suffit à tous les trouver.
+    const c = cellsOf(x, y, r + GAP);
+    for (let cx = c.x0; cx <= c.x1; cx++) {
+      for (let cy = c.y0; cy <= c.y1; cy++) {
+        const bucket = grid.get(`${cx}:${cy}`);
+        if (!bucket) continue;
+        for (const d of bucket) if (hits(d, x, y, r)) return false;
+      }
+    }
+    return true;
+  };
+
+  // Aire déjà occupée : elle donne le rayon du front, d'où l'on part chercher
+  // une place plutôt que de resonder le centre — dense — à chaque amas.
+  let filled = 0;
+
+  items.forEach((item, rank) => {
+    let pos = { x: 0, y: 0 };
+
+    if (filled > 0) {
+      // Le pas suit la taille de l'amas à poser : les petits se faufilent au
+      // plus près, les gros ne perdent pas leur temps à sonder chaque pixel.
+      const step = Math.max(10, item.r * 0.55);
+      const front = Math.sqrt(filled / Math.PI);
+      // On redescend d'un amas sous le front : les derniers creux du pourtour
+      // restent accessibles, c'est ce qui donne son grain à l'ensemble.
+      const first = Math.max(1, Math.floor((front - item.r * 2) / step));
+      let found = false;
+      for (let ring = first; ring < first + 400 && !found; ring++) {
+        const radius = ring * step;
+        const slots = Math.max(9, Math.round((TAU * radius) / step));
+        // Décalage d'un anneau à l'autre : pas de couloirs rectilignes.
+        const phase = ring * GOLDEN_ANGLE;
+        for (let s = 0; s < slots; s++) {
+          const a = phase + (s / slots) * TAU;
+          const x = Math.cos(a) * radius * stretchX;
+          const y = Math.sin(a) * radius * stretchY;
+          if (free(x, y, item.r)) {
+            pos = { x, y };
+            found = true;
+            break;
+          }
+        }
+      }
+      if (!found) {
+        // Garde-fou : plutôt loin dehors que superposé au reste.
+        const a = rank * GOLDEN_ANGLE;
+        const radius = (first + 400) * step;
+        pos = {
+          x: Math.cos(a) * radius * stretchX,
+          y: Math.sin(a) * radius * stretchY,
+        };
+      }
+    }
+
+    remember({ x: pos.x, y: pos.y, r: item.r });
+    filled += Math.PI * (item.r + GAP / 2) ** 2;
+    for (const m of item.members) {
+      nodes[m].x += pos.x;
+      nodes[m].y += pos.y;
+      // La teinte suit l'ordre de pose : deux amas voisins sur la spirale ne
+      // tombent jamais sur la même nuance.
+      nodes[m].cluster = rank;
     }
   });
 }
@@ -305,6 +401,7 @@ export function buildGraphLayout(
     trackCount: Number(n.trackCount) || 0,
     degree: 0,
     neighbors: [],
+    cluster: 0,
     r: 8,
     score: 0,
     x: 0,
@@ -372,10 +469,17 @@ export function buildGraphLayout(
     }
     components.forEach((members, c) => {
       layoutComponent(members, nodes, edgesByComponent.get(c) ?? []);
+      // Sans cette rotation, tous les duos sortent à l'horizontale et l'œil ne
+      // voit plus qu'un peigne. Angle d'or : réparti, et toujours le même d'un
+      // affichage à l'autre.
+      rotateComponent(members, nodes, c * GOLDEN_ANGLE);
     });
-    packComponents(components, nodes, aspect);
+    packClusters(components, nodes, aspect);
   } catch {
     fallbackLayout(nodes);
+    components.forEach((members, c) => {
+      for (const i of members) nodes[i].cluster = c;
+    });
   }
 
   for (const n of nodes) {

@@ -36,7 +36,6 @@ export interface GraphCanvasHandle {
 interface Palette {
   node: string;
   nodeStrong: string;
-  edge: string;
   label: string;
   labelSoft: string;
   halo: string;
@@ -65,6 +64,16 @@ function clamp(v: number, min: number, max: number) {
   return Math.max(min, Math.min(max, v));
 }
 
+const FALLBACK_PALETTE: Palette = {
+  node: '#c6a0f6',
+  nodeStrong: '#eed49f',
+  label: '#f4ede4',
+  labelSoft: '#cbc5ce',
+  halo: '#1e2030',
+  panel: '#2b2e43',
+  hairline: '#5b6078',
+};
+
 function readPalette(host: HTMLElement): Palette {
   const probe = document.createElement('span');
   probe.style.cssText =
@@ -76,21 +85,70 @@ function readPalette(host: HTMLElement): Palette {
     const value = getComputedStyle(probe).color;
     return value && value !== 'rgba(0, 0, 0, 0)' ? value : fallback;
   };
+  const f = FALLBACK_PALETTE;
   const palette: Palette = {
-    node: read('var(--art-action, var(--color-accent))', '#c6a0f6'),
+    node: read('var(--art-action, var(--color-accent))', f.node),
     nodeStrong: read(
       'var(--art-secondary, var(--color-accent-secondary))',
-      '#eed49f',
+      f.nodeStrong,
     ),
-    edge: read('var(--color-ink-muted)', '#9995aa'),
-    label: read('var(--color-ink)', '#f4ede4'),
-    labelSoft: read('var(--color-ink-soft)', '#cbc5ce'),
-    halo: read('var(--color-paper)', '#1e2030'),
-    panel: read('var(--color-paper-high)', '#2b2e43'),
-    hairline: read('var(--color-hairline-strong)', '#5b6078'),
+    label: read('var(--color-ink)', f.label),
+    labelSoft: read('var(--color-ink-soft)', f.labelSoft),
+    halo: read('var(--color-paper)', f.halo),
+    panel: read('var(--color-paper-high)', f.panel),
+    hairline: read('var(--color-hairline-strong)', f.hairline),
   };
   probe.remove();
   return palette;
+}
+
+/** `rgb(198 160 246)`, `rgba(…)`, `color(srgb 0.77 …)` → composantes 0-255. */
+function parseColor(css: string): [number, number, number] | null {
+  const parts = css.match(/-?[\d.]+/g);
+  if (!parts || parts.length < 3) return null;
+  const v = parts.slice(0, 3).map(Number);
+  if (v.some((n) => !Number.isFinite(n))) return null;
+  // `color(srgb …)` exprime ses canaux entre 0 et 1.
+  const scale = v.every((n) => n <= 1) ? 255 : 1;
+  return [v[0] * scale, v[1] * scale, v[2] * scale];
+}
+
+function rgbToHsl([r, g, b]: [number, number, number]) {
+  const R = r / 255;
+  const G = g / 255;
+  const B = b / 255;
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return { h: 0, s: 0, l: l * 100 };
+  const s = d / (1 - Math.abs(2 * l - 1));
+  let h: number;
+  if (max === R) h = ((G - B) / d) % 6;
+  else if (max === G) h = (B - R) / d + 2;
+  else h = (R - G) / d + 4;
+  return { h: (h * 60 + 360) % 360, s: s * 100, l: l * 100 };
+}
+
+/**
+ * Une nuance par réseau, toutes cousines de la couleur de la pochette : on
+ * distingue les groupes d'un coup d'œil sans transformer la page en arc-en-ciel.
+ */
+function buildClusterColors(base: string, count: number): string[] {
+  const rgb = parseColor(base);
+  if (!rgb || count <= 0) return [];
+  const { h, s, l } = rgbToHsl(rgb);
+  const colors: string[] = [];
+  for (let i = 0; i < count; i++) {
+    // Suite dorée sur [-1, 1] : deux réseaux voisins ne partagent jamais leur
+    // teinte, et la répartition reste régulière quel que soit leur nombre.
+    const t = (((i * 0.6180339887498949) % 1) - 0.5) * 2;
+    const hue = (h + t * 34 + 360) % 360;
+    const sat = clamp(s + t * 10, 28, 92);
+    const lum = clamp(l + Math.abs(t) * 7 - 3, 42, 82);
+    colors.push(`hsl(${hue.toFixed(1)}, ${sat.toFixed(0)}%, ${lum.toFixed(0)}%)`);
+  }
+  return colors;
 }
 
 function truncate(name: string, max: number) {
@@ -128,6 +186,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
     const autoFitRef = useRef(true);
     const hoverRef = useRef<number | null>(null);
     const paletteRef = useRef<Palette | null>(null);
+    const clusterColorsRef = useRef<string[] | null>(null);
     const rafRef = useRef<number | null>(null);
     const animRef = useRef<number | null>(null);
     const pointersRef = useRef(new Map<number, { x: number; y: number }>());
@@ -142,6 +201,58 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
     } | null>(null);
     const lastTapRef = useRef<{ index: number; time: number } | null>(null);
 
+    /* ---------------------------- dimensions -------------------------------- */
+
+    const computeFit = useCallback((): View => {
+      const { w, h } = sizeRef.current;
+      const { layout, dense } = propsRef.current;
+      const b = layout.bounds;
+      const pad = dense ? 22 : 44;
+      const bw = Math.max(b.maxX - b.minX, 1);
+      const bh = Math.max(b.maxY - b.minY, 1);
+      const k = clamp(
+        Math.min((w - pad * 2) / bw, (h - pad * 2) / bh),
+        0.04,
+        1.15,
+      );
+      fitKRef.current = k;
+      const cx = (b.minX + b.maxX) / 2;
+      const cy = (b.minY + b.maxY) / 2;
+      return { k, tx: w / 2 - cx * k, ty: h / 2 - cy * k };
+    }, []);
+
+    /**
+     * Recale le canvas sur sa zone de dessin. Appelée aussi au début de chaque
+     * dessin : si un redimensionnement n'a pas été notifié (onglet en veille,
+     * transition de route, ResizeObserver muet), le premier redessin remet la
+     * planche d'aplomb au lieu de laisser un cadre vide.
+     *
+     * @returns `true` si la taille a changé.
+     */
+    const measure = useCallback(() => {
+      const wrap = wrapRef.current;
+      const canvas = canvasRef.current;
+      if (!wrap || !canvas) return false;
+      const rect = wrap.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      const w = Math.round(rect.width);
+      const h = Math.round(rect.height);
+      // Zone pas encore mise en page : surtout ne pas figer une taille nulle,
+      // le ResizeObserver rappellera dès qu'elle en aura une.
+      if (w < 2 || h < 2) return false;
+      const cur = sizeRef.current;
+      if (cur.w === w && cur.h === h && cur.dpr === dpr) return false;
+      sizeRef.current = { w, h, dpr };
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      // Pas de largeur/hauteur en style inline : la CSS (100 %) garde le canvas
+      // collé à sa zone même si la mesure a du retard — au pire l'image est
+      // étirée une fraction de seconde, jamais absente.
+      if (autoFitRef.current) viewRef.current = computeFit();
+      else fitKRef.current = computeFit().k;
+      return true;
+    }, [computeFit]);
+
     /* ----------------------------- dessin ---------------------------------- */
 
     const draw = useCallback(() => {
@@ -152,7 +263,16 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      if (!paletteRef.current) paletteRef.current = readPalette(wrap);
+      measure();
+
+      if (!paletteRef.current) {
+        try {
+          paletteRef.current = readPalette(wrap);
+        } catch {
+          // Une couleur illisible ne doit jamais coûter le graphe entier.
+          paletteRef.current = FALLBACK_PALETTE;
+        }
+      }
       const pal = paletteRef.current;
 
       const { w, h, dpr } = sizeRef.current;
@@ -160,6 +280,18 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
       const { k, tx, ty } = viewRef.current;
       const { layout, matched, selected, dense } = propsRef.current;
       const nodes = layout.nodes;
+
+      if (
+        !clusterColorsRef.current ||
+        clusterColorsRef.current.length !== layout.clusterCount
+      ) {
+        clusterColorsRef.current = buildClusterColors(
+          pal.node,
+          layout.clusterCount,
+        );
+      }
+      const tints = clusterColorsRef.current;
+      const tint = (i: number) => tints[nodes[i].cluster] ?? pal.node;
 
       const focus = hoverRef.current ?? selected;
       const near =
@@ -209,11 +341,13 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
           }
           alpha = 0.06;
         } else {
-          alpha = 0.3;
+          alpha = 0.38;
         }
 
         ctx.globalAlpha = alpha;
-        ctx.strokeStyle = pal.edge;
+        // Le lien porte la teinte de son réseau : une arête ne franchit jamais
+        // la frontière d'une composante, la couleur est donc sans ambiguïté.
+        ctx.strokeStyle = tint(e.a);
         ctx.lineWidth = Math.min(1 + e.weight * 0.4, 4.5) * edgeScale;
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -248,7 +382,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
           : focus === null || isFocus || (near?.has(i) ?? false);
 
         ctx.globalAlpha = lit ? 1 : 0.13;
-        ctx.fillStyle = isFocus ? pal.nodeStrong : pal.node;
+        ctx.fillStyle = isFocus ? pal.nodeStrong : tint(i);
         ctx.beginPath();
         ctx.arc(x, y, r, 0, TAU);
         ctx.fill();
@@ -422,7 +556,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
       }
 
       ctx.globalAlpha = 1;
-    }, []);
+    }, [measure]);
 
     const requestDraw = useCallback(() => {
       // Onglet en arrière-plan : rAF ne se déclenche pas, on dessine tout de suite
@@ -469,24 +603,6 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
       [draw, stopAnimation],
     );
 
-    const computeFit = useCallback((): View => {
-      const { w, h } = sizeRef.current;
-      const { layout, dense } = propsRef.current;
-      const b = layout.bounds;
-      const pad = dense ? 22 : 44;
-      const bw = Math.max(b.maxX - b.minX, 1);
-      const bh = Math.max(b.maxY - b.minY, 1);
-      const k = clamp(
-        Math.min((w - pad * 2) / bw, (h - pad * 2) / bh),
-        0.04,
-        1.15,
-      );
-      fitKRef.current = k;
-      const cx = (b.minX + b.maxX) / 2;
-      const cy = (b.minY + b.maxY) / 2;
-      return { k, tx: w / 2 - cx * k, ty: h / 2 - cy * k };
-    }, []);
-
     const minZoom = () => Math.min(0.25, fitKRef.current * 0.7);
 
     const zoomAt = useCallback(
@@ -530,53 +646,61 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
       [animateTo, computeFit, stopAnimation, zoomAt],
     );
 
-    /* ------------------------------ dimensions ------------------------------ */
+    /* --------------------- synchronisation de la taille --------------------- */
 
     useEffect(() => {
       const wrap = wrapRef.current;
-      const canvas = canvasRef.current;
-      if (!wrap || !canvas) return;
+      if (!wrap) return;
 
-      const apply = () => {
-        const rect = wrap.getBoundingClientRect();
-        const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-        const w = Math.max(1, Math.round(rect.width));
-        const h = Math.max(1, Math.round(rect.height));
-        if (
-          sizeRef.current.w === w &&
-          sizeRef.current.h === h &&
-          sizeRef.current.dpr === dpr
-        )
-          return;
-        sizeRef.current = { w, h, dpr };
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-        canvas.style.width = `${w}px`;
-        canvas.style.height = `${h}px`;
-        if (autoFitRef.current) viewRef.current = computeFit();
-        else fitKRef.current = computeFit().k;
-        requestDraw();
+      const sync = () => {
+        // Redimensionner le bitmap l'efface : on redessine tout de suite plutôt
+        // que d'attendre une frame qui, page en arrière-plan, ne viendra pas.
+        if (measure()) draw();
       };
 
-      apply();
-      const ro = new ResizeObserver(apply);
+      sync();
+      const ro = new ResizeObserver(sync);
       ro.observe(wrap);
-      // Filet de sécurité : ResizeObserver n'est notifié qu'au rendu, donc jamais
-      // si la page était en arrière-plan au montage.
-      window.addEventListener('resize', apply);
+      // La zone peut n'avoir sa taille définitive qu'après coup — et un
+      // ResizeObserver n'est notifié qu'au rendu, donc jamais tant que la page
+      // n'est pas affichée. On multiplie donc les réveils : apparition à
+      // l'écran, retour d'onglet, retour d'historique, rotation du téléphone.
+      const io = new IntersectionObserver(sync);
+      io.observe(wrap);
+      window.addEventListener('resize', sync);
+      window.addEventListener('orientationchange', sync);
+      window.addEventListener('pageshow', sync);
+      document.addEventListener('visibilitychange', sync);
       return () => {
         ro.disconnect();
-        window.removeEventListener('resize', apply);
+        io.disconnect();
+        window.removeEventListener('resize', sync);
+        window.removeEventListener('orientationchange', sync);
+        window.removeEventListener('pageshow', sync);
+        document.removeEventListener('visibilitychange', sync);
       };
-    }, [computeFit, requestDraw]);
+    }, [draw, measure]);
+
+    /* Les polices arrivent après le premier dessin : les largeurs d'étiquettes
+       mesurées avec la police de secours ne valent plus rien. */
+    useEffect(() => {
+      let alive = true;
+      document.fonts?.ready.then(() => {
+        if (alive) requestDraw();
+      });
+      return () => {
+        alive = false;
+      };
+    }, [requestDraw]);
 
     /* Nouveau jeu de données → on recadre. */
     useEffect(() => {
       autoFitRef.current = true;
       hoverRef.current = null;
+      measure();
       viewRef.current = computeFit();
-      requestDraw();
-    }, [props.layout, computeFit, requestDraw]);
+      draw();
+    }, [props.layout, computeFit, draw, measure]);
 
     /* Sélection / recherche / densité → simple redessin. */
     useEffect(() => {
@@ -587,6 +711,9 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
     useEffect(() => {
       const mo = new MutationObserver(() => {
         paletteRef.current = null;
+        // Les teintes des réseaux dérivent de la couleur de base : elles
+        // repartent avec elle.
+        clusterColorsRef.current = null;
         requestDraw();
       });
       mo.observe(document.documentElement, {
@@ -620,7 +747,15 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(
 
     const localPoint = (e: { clientX: number; clientY: number }) => {
       const rect = canvasRef.current!.getBoundingClientRect();
-      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      // Le canvas est étiré par la CSS : tant qu'une mesure en retard n'a pas
+      // été rattrapée, on ramène le doigt dans le repère du dessin.
+      const { w, h } = sizeRef.current;
+      const kx = rect.width > 0 && w > 0 ? w / rect.width : 1;
+      const ky = rect.height > 0 && h > 0 ? h / rect.height : 1;
+      return {
+        x: (e.clientX - rect.left) * kx,
+        y: (e.clientY - rect.top) * ky,
+      };
     };
 
     const hitTest = useCallback((px: number, py: number) => {
