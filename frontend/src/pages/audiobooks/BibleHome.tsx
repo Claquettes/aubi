@@ -4,9 +4,11 @@ import { audiobooksApi } from '@/api/audiobooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
+import { useT } from '@/i18n';
 import styles from './BibleHome.module.css';
 
 export function BibleHome() {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['bible'],
     queryFn: () => audiobooksApi.bibleBooks(),
@@ -18,7 +20,7 @@ export function BibleHome() {
 
   return (
     <div>
-      <PageHeader title="Bible" />
+      <PageHeader title={t('book.bible')} />
       {books.length ? (
         sections.map((sec) => (
           <section key={sec} className={styles.section}>
@@ -40,7 +42,7 @@ export function BibleHome() {
           </section>
         ))
       ) : (
-        <EmptyState>Aucun livre biblique indexé.</EmptyState>
+        <EmptyState>{t('book.bibleEmpty')}</EmptyState>
       )}
     </div>
   );

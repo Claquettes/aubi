@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { useT } from '@/i18n';
 import styles from './BackButton.module.css';
 
 /**
@@ -9,6 +10,7 @@ import styles from './BackButton.module.css';
  * (iOS surtout) n'a aucun bouton retour système. Doublé de la touche Échap.
  */
 export function BackButton({ fallback = '/music' }: { fallback?: string }) {
+  const t = useT();
   const navigate = useNavigate();
 
   const goBack = useCallback(() => {
@@ -45,11 +47,11 @@ export function BackButton({ fallback = '/music' }: { fallback?: string }) {
       type="button"
       className={styles.back}
       onClick={goBack}
-      aria-label="Retour"
-      title="Retour (Échap)"
+      aria-label={t('common.back')}
+      title={t('common.backTitle')}
     >
       <ArrowLeft size={18} strokeWidth={2} />
-      <span className={styles.label}>Retour</span>
+      <span className={styles.label}>{t('common.back')}</span>
     </button>
   );
 }

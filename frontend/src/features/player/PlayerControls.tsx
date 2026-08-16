@@ -7,10 +7,12 @@ import {
   SkipBack,
   SkipForward,
 } from 'lucide-react';
+import { useT } from '@/i18n';
 import { usePlayerStore } from './usePlayerStore';
 import styles from './player.module.css';
 
 export function PlayerControls({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
+  const t = useT();
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const togglePlay = usePlayerStore((s) => s.togglePlay);
   const next = usePlayerStore((s) => s.next);
@@ -27,7 +29,7 @@ export function PlayerControls({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         type="button"
         className={`${styles.ctrlBtn} ${isShuffle ? styles.ctrlActive : ''}`}
         onClick={toggleShuffle}
-        aria-label="Lecture aléatoire"
+        aria-label={t('player.shuffle')}
       >
         <Shuffle size={18} />
       </button>
@@ -35,7 +37,7 @@ export function PlayerControls({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         type="button"
         className={styles.ctrlBtn}
         onClick={prev}
-        aria-label="Précédent"
+        aria-label={t('player.previous')}
       >
         <SkipBack size={big ? 26 : 20} />
       </button>
@@ -43,7 +45,7 @@ export function PlayerControls({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         type="button"
         className={styles.playBtn}
         onClick={togglePlay}
-        aria-label={isPlaying ? 'Pause' : 'Lecture'}
+        aria-label={isPlaying ? t('player.pause') : t('player.play')}
       >
         {isPlaying ? <Pause size={big ? 28 : 22} /> : <Play size={big ? 28 : 22} />}
       </button>
@@ -51,7 +53,7 @@ export function PlayerControls({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         type="button"
         className={styles.ctrlBtn}
         onClick={next}
-        aria-label="Suivant"
+        aria-label={t('player.next')}
       >
         <SkipForward size={big ? 26 : 20} />
       </button>
@@ -59,7 +61,7 @@ export function PlayerControls({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
         type="button"
         className={`${styles.ctrlBtn} ${repeatMode !== 'none' ? styles.ctrlActive : ''}`}
         onClick={cycleRepeat}
-        aria-label="Répéter"
+        aria-label={t('player.repeat')}
       >
         {repeatMode === 'one' ? <Repeat1 size={18} /> : <Repeat size={18} />}
       </button>

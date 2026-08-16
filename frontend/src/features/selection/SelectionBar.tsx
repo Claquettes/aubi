@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Disc3, ListMusic, Pencil, X } from 'lucide-react';
 import { useAlbumType } from '@/features/library/useAlbumType';
+import { useT } from '@/i18n';
 import { BulkEditModal } from './BulkEditModal';
 import { useSelection } from './selectionStore';
 import styles from './SelectionBar.module.css';
 
 export function SelectionBar() {
+  const t = useT();
   const active = useSelection((s) => s.active);
   const kind = useSelection((s) => s.kind);
   const ids = useSelection((s) => s.ids);
@@ -15,7 +17,6 @@ export function SelectionBar() {
 
   if (!active) return null;
   const count = ids.size;
-  const s = count > 1 ? 's' : '';
 
   const reclass = (isCompilation: boolean) => {
     setType.mutate({ ids: [...ids], isCompilation });
@@ -29,13 +30,14 @@ export function SelectionBar() {
           type="button"
           className={styles.close}
           onClick={clear}
-          aria-label="Annuler la sélection"
+          aria-label={t('select.cancelAria')}
         >
           <X size={20} />
         </button>
         <span className={styles.count}>
-          {count} {kind === 'album' ? 'album' : 'titre'}
-          {s} sélectionné{s}
+          {kind === 'album'
+            ? t('select.albums', { count })
+            : t('select.tracks', { count })}
         </span>
         {kind === 'album' ? (
           <>
@@ -45,7 +47,7 @@ export function SelectionBar() {
               onClick={() => reclass(true)}
               disabled={setType.isPending}
             >
-              <ListMusic size={16} /> En playlists
+              <ListMusic size={16} /> {t('select.toPlaylists')}
             </button>
             <button
               type="button"
@@ -53,7 +55,7 @@ export function SelectionBar() {
               onClick={() => reclass(false)}
               disabled={setType.isPending}
             >
-              <Disc3 size={16} /> En albums
+              <Disc3 size={16} /> {t('select.toAlbums')}
             </button>
           </>
         ) : (
@@ -62,7 +64,7 @@ export function SelectionBar() {
             className={styles.edit}
             onClick={() => setEditing(true)}
           >
-            <Pencil size={16} /> Modifier
+            <Pencil size={16} /> {t('select.edit')}
           </button>
         )}
       </div>

@@ -4,6 +4,7 @@ import { tracksApi } from '@/api/tracks';
 import { useToast } from '@/components/feedback/Toast';
 import { Button } from '@/components/primitives/Button';
 import { Modal } from '@/components/primitives/Modal';
+import { useT } from '@/i18n';
 import type { Track } from '@/types/api';
 
 const label = {
@@ -34,6 +35,7 @@ export function EditTrackModal({
 }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const t = useT();
   const [title, setTitle] = useState(track.title);
   const [artist, setArtist] = useState(track.artist?.name ?? '');
   const [saving, setSaving] = useState(false);
@@ -47,7 +49,7 @@ export function EditTrackModal({
         artistName: artist.trim() || undefined,
       });
       qc.invalidateQueries();
-      toast('Titre enregistré');
+      toast(t('edit.trackSaved'));
       onClose();
     } finally {
       setSaving(false);
@@ -55,23 +57,23 @@ export function EditTrackModal({
   };
 
   return (
-    <Modal title="Modifier le titre" onClose={onClose}>
-      <span style={label}>Titre</span>
+    <Modal title={t('edit.trackTitle')} onClose={onClose}>
+      <span style={label}>{t('edit.trackTitleField')}</span>
       <input
         style={input}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         autoFocus
       />
-      <span style={label}>Artiste(s) — séparez par une virgule</span>
+      <span style={label}>{t('edit.artistsField')}</span>
       <input
         style={input}
         value={artist}
         onChange={(e) => setArtist(e.target.value)}
-        placeholder="Artiste A, Artiste B"
+        placeholder={t('edit.artistsPlaceholder')}
       />
       <Button variant="primary" onClick={submit} disabled={!title.trim() || saving}>
-        {saving ? 'Enregistrement…' : 'Enregistrer'}
+        {saving ? t('common.saving') : t('common.save')}
       </Button>
       <p
         style={{
@@ -79,7 +81,7 @@ export function EditTrackModal({
           color: 'var(--color-text-tertiary)',
         }}
       >
-        Enregistré en base et dans les tags du fichier (MP3).
+        {t('edit.trackNote')}
       </p>
     </Modal>
   );

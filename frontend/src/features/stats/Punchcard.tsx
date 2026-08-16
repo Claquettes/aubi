@@ -1,6 +1,7 @@
+import { t as translate, useT } from '@/i18n';
 import type { ListeningPatterns } from '@/types/api';
 import { HEAT_COLORS } from './chartTheme';
-import { int, plural, WEEKDAYS } from './statsFormat';
+import { hourTick, weekdays } from './statsFormat';
 import styles from './stats.module.css';
 
 /**
@@ -12,6 +13,7 @@ export function Punchcard({
 }: {
   cells: ListeningPatterns['punchcard'];
 }) {
+  const t = useT();
   const map = new Map(cells.map((c) => [`${c.weekday}:${c.hour}`, c.playCount]));
   const max = Math.max(1, ...cells.map((c) => c.playCount));
 
@@ -22,10 +24,10 @@ export function Punchcard({
           <div />
           {Array.from({ length: 24 }, (_, h) => (
             <div key={`h${h}`} className={styles.punchHourLabel}>
-              {h % 3 === 0 ? `${h}h` : ''}
+              {h % 3 === 0 ? hourTick(h) : ''}
             </div>
           ))}
-          {WEEKDAYS.map((wd, i) => (
+          {weekdays().map((wd, i) => (
             <PunchRow
               key={wd}
               label={wd}
@@ -37,7 +39,7 @@ export function Punchcard({
         </div>
       </div>
       <div className={styles.scaleRow}>
-        <span className={styles.scaleLabel}>Moins</span>
+        <span className={styles.scaleLabel}>{t('stats.chart.less')}</span>
         <span
           className={styles.scaleCell}
           style={{ background: 'var(--chart-empty)' }}
@@ -45,7 +47,7 @@ export function Punchcard({
         {HEAT_COLORS.map((c) => (
           <span key={c} className={styles.scaleCell} style={{ background: c }} />
         ))}
-        <span className={styles.scaleLabel}>Plus</span>
+        <span className={styles.scaleLabel}>{t('stats.chart.more')}</span>
       </div>
     </div>
   );
@@ -75,7 +77,11 @@ function PunchRow({
             style={{
               background: step < 0 ? 'var(--chart-empty)' : HEAT_COLORS[step],
             }}
-            title={`${label} ${h}h — ${int(v)} lecture${plural(v)}`}
+            title={translate('stats.punch.cell', {
+              day: label,
+              hour: h,
+              plays: translate('count.plays', { count: v }),
+            })}
           />
         );
       })}

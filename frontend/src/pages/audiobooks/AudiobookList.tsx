@@ -7,8 +7,10 @@ import { Grid } from '@/components/layout/Grid';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
 import { BookCard } from '@/features/library/BookCard';
+import { useT } from '@/i18n';
 
 export function AudiobookList() {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['audiobooks'],
     queryFn: () => audiobooksApi.list({ limit: 200 }),
@@ -19,7 +21,7 @@ export function AudiobookList() {
   return (
     <div>
       <PageHeader
-        title="Livres audio"
+        title={t('nav.audiobooks')}
         actions={
           <Link
             to="/audiobooks/bible"
@@ -32,7 +34,7 @@ export function AudiobookList() {
               fontSize: 'var(--text-sm)',
             }}
           >
-            <BookOpen size={16} /> Bible
+            <BookOpen size={16} /> {t('book.bible')}
           </Link>
         }
       />
@@ -45,7 +47,7 @@ export function AudiobookList() {
           ))}
         </Grid>
       ) : (
-        <EmptyState>Aucun livre audio pour le moment.</EmptyState>
+        <EmptyState>{t('book.empty')}</EmptyState>
       )}
     </div>
   );

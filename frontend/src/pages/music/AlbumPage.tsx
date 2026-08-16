@@ -16,6 +16,7 @@ import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { useAlbumType } from '@/features/library/useAlbumType';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
+import { useT } from '@/i18n';
 import styles from './AlbumPage.module.css';
 
 const heroButtonStyle = {
@@ -28,6 +29,7 @@ const heroButtonStyle = {
 };
 
 export function AlbumPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { data: album, isLoading } = useQuery({
     queryKey: ['album', id],
@@ -43,7 +45,7 @@ export function AlbumPage() {
   const queryClient = useQueryClient();
 
   if (isLoading) return <Spinner />;
-  if (!album) return <EmptyState>Album introuvable.</EmptyState>;
+  if (!album) return <EmptyState>{t('album.notFound')}</EmptyState>;
 
   const tracks = album.tracks ?? [];
   const playAll = () => {
@@ -63,7 +65,6 @@ export function AlbumPage() {
       })
       .catch(() => {});
   };
-  const plural = (n: number) => (n > 1 ? 's' : '');
 
   return (
     <div className="page-enter">
@@ -71,12 +72,14 @@ export function AlbumPage() {
         accent={accent}
         coverUrl={album.coverUrl}
         label={album.title}
-        kicker={album.isCompilation ? 'Collection' : 'Album'}
+        kicker={
+          album.isCompilation ? t('common.collection') : t('common.album')
+        }
         title={album.title}
         subtitle={
           <>
             {album.isCompilation ? (
-              'Artistes variés'
+              t('common.variousArtists')
             ) : album.artist ? (
               <Link
                 to={`/music/artists/${album.artist.id}`}
@@ -88,10 +91,13 @@ export function AlbumPage() {
               '—'
             )}
             {!album.isCompilation && album.year ? ` · ${album.year}` : ''} ·{' '}
-            {album.trackCount} titres · <DurationText ms={album.durationMs} />
+            {t('count.tracks', { count: album.trackCount })} ·{' '}
+            <DurationText ms={album.durationMs} />
             <br />
-            {album.albumPlayCount} lancement{plural(album.albumPlayCount)} ·{' '}
-            {album.playCount} écoute{plural(album.playCount)} de titres
+            {t('count.launches', { count: album.albumPlayCount })} ·{' '}
+            {t('album.listensOfTracks', {
+              listens: t('count.listens', { count: album.playCount }),
+            })}
           </>
         }
         actions={
@@ -106,7 +112,7 @@ export function AlbumPage() {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              aria-label="Modifier l'album"
+              aria-label={t('album.editAria')}
               style={heroButtonStyle}
             >
               <Pencil size={20} />
@@ -122,13 +128,13 @@ export function AlbumPage() {
               disabled={setType.isPending}
               aria-label={
                 album.isCompilation
-                  ? 'Remettre dans les albums'
-                  : 'Déplacer dans les playlists'
+                  ? t('album.toAlbumsAria')
+                  : t('album.toPlaylistsAria')
               }
               title={
                 album.isCompilation
-                  ? 'C’est un album, pas une playlist'
-                  : 'C’est une playlist, pas un album'
+                  ? t('album.isAlbumTitle')
+                  : t('album.isPlaylistTitle')
               }
               style={heroButtonStyle}
             >
@@ -141,10 +147,10 @@ export function AlbumPage() {
         <EditAlbumModal album={album} onClose={() => setEditing(false)} />
       )}
       <div className={styles.tracks}>
-        {tracks.map((t, i) => (
+        {tracks.map((track, i) => (
           <TrackRow
-            key={t.id}
-            track={t}
+            key={track.id}
+            track={track}
             index={i}
             queue={tracks}
             source={`album:${album.id}`}

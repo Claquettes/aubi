@@ -11,9 +11,11 @@ import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
+import { useT } from '@/i18n';
 import styles from './PlaylistPage.module.css';
 
 export function PlaylistPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ export function PlaylistPage() {
   const setSource = usePlayerStore((s) => s.setSource);
 
   if (isLoading) return <Spinner />;
-  if (!pl) return <EmptyState>Playlist introuvable.</EmptyState>;
+  if (!pl) return <EmptyState>{t('playlist.notFound')}</EmptyState>;
 
   const tracks = pl.tracks ?? [];
   const playAll = () => {
@@ -37,7 +39,7 @@ export function PlaylistPage() {
     playTrack(tracks[0], tracks, 0);
   };
   const remove = async () => {
-    if (!confirm(`Supprimer la playlist « ${pl.name} » ?`)) return;
+    if (!confirm(t('playlist.deleteConfirm', { name: pl.name }))) return;
     await playlistsApi.remove(pl.id);
     qc.invalidateQueries({ queryKey: ['playlists'] });
     navigate('/playlists');
@@ -50,12 +52,13 @@ export function PlaylistPage() {
         accent={accent}
         coverUrl={pl.coverUrl}
         label={pl.name}
-        kicker="Playlist"
+        kicker={t('common.playlist')}
         title={pl.name}
         subtitle={
           <>
             {pl.description ? `${pl.description} · ` : ''}
-            {pl.trackCount} titres · <DurationText ms={pl.durationMs} />
+            {t('count.tracks', { count: pl.trackCount })} ·{' '}
+            <DurationText ms={pl.durationMs} />
           </>
         }
         actions={
@@ -65,7 +68,7 @@ export function PlaylistPage() {
               type="button"
               className={styles.delete}
               onClick={remove}
-              aria-label="Supprimer la playlist"
+              aria-label={t('playlist.deleteAria')}
             >
               <Trash2 size={20} />
             </button>
@@ -75,9 +78,7 @@ export function PlaylistPage() {
       {tracks.length ? (
         <PlaylistTrackList playlistId={pl.id} tracks={tracks} />
       ) : (
-        <EmptyState>
-          Playlist vide. Ajoute des titres via le bouton + d'un morceau.
-        </EmptyState>
+        <EmptyState>{t('playlist.tracksEmpty')}</EmptyState>
       )}
     </div>
   );

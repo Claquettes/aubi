@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { GripVertical, X } from 'lucide-react';
 import { CoverArt } from '@/components/media/CoverArt';
+import { useT } from '@/i18n';
 import { usePlayerStore } from './usePlayerStore';
 import styles from './player.module.css';
 
 export function QueueDrawer() {
+  const t = useT();
   const open = usePlayerStore((s) => s.queueOpen);
   const setOpen = usePlayerStore((s) => s.setQueueOpen);
   const queue = usePlayerStore((s) => s.queue);
@@ -29,19 +31,21 @@ export function QueueDrawer() {
       <div className={styles.scrim} onClick={() => setOpen(false)} />
       <aside className={styles.queue}>
         <header className={styles.queueHead}>
-          <span>File d'attente · {queue.length}</span>
+          <span>
+            {t('player.queue')} · {queue.length}
+          </span>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Fermer"
+            aria-label={t('common.close')}
           >
             <X size={18} />
           </button>
         </header>
         <div className={styles.queueList}>
-          {queue.map((t, i) => (
+          {queue.map((item, i) => (
             <div
-              key={`${t.id}-${i}`}
+              key={`${item.id}-${i}`}
               className={`${styles.queueItem} ${i === queueIndex ? styles.queueActive : ''} ${
                 overIndex === i && dragIndex != null && dragIndex !== i
                   ? styles.queueOver
@@ -68,12 +72,14 @@ export function QueueDrawer() {
               <button
                 type="button"
                 className={styles.queuePlay}
-                onClick={() => playTrack(t, queue, i)}
+                onClick={() => playTrack(item, queue, i)}
               >
-                <CoverArt src={t.coverUrl} label={t.title} size="xs" />
+                <CoverArt src={item.coverUrl} label={item.title} size="xs" />
                 <div className={styles.queueMeta}>
-                  <div className={styles.queueTitle}>{t.title}</div>
-                  <div className={styles.queueSub}>{t.artist?.name ?? '—'}</div>
+                  <div className={styles.queueTitle}>{item.title}</div>
+                  <div className={styles.queueSub}>
+                    {item.artist?.name ?? '—'}
+                  </div>
                 </div>
               </button>
               {i !== queueIndex && (
@@ -81,7 +87,7 @@ export function QueueDrawer() {
                   type="button"
                   className={styles.queueRemove}
                   onClick={() => removeFromQueue(i)}
-                  aria-label="Retirer de la file"
+                  aria-label={t('player.queueRemove')}
                 >
                   <X size={15} />
                 </button>

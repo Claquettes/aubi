@@ -1,3 +1,4 @@
+import { useT } from '@/i18n';
 import { CHART_COLORS, ChartLegend, HEAT_COLORS } from './chartTheme';
 import { int, percent } from './statsFormat';
 import styles from './stats.module.css';
@@ -16,12 +17,14 @@ export interface Slice {
 export function ProportionBar({
   slices,
   ordinal = false,
-  unit = 'titres',
+  unit,
 }: {
   slices: Slice[];
   ordinal?: boolean;
   unit?: string;
 }) {
+  const t = useT();
+  const unitLabel = unit ?? t('stats.prop.unit');
   const items = slices.filter((s) => s.value > 0);
   const total = items.reduce((a, b) => a + b.value, 0);
   if (!total) return null;
@@ -42,10 +45,12 @@ export function ProportionBar({
               width: `${(s.value / total) * 100}%`,
               background: s.color,
             }}
-            title={`${s.label} — ${int(s.value)} ${unit} (${percent(
-              s.value / total,
-              1,
-            )})`}
+            title={t('stats.prop.tooltip', {
+              label: s.label,
+              count: int(s.value),
+              unit: unitLabel,
+              percent: percent(s.value / total, 1),
+            })}
           />
         ))}
       </div>

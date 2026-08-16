@@ -10,8 +10,10 @@ import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
+import { useT } from '@/i18n';
 
 export function CollectionPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { data: col, isLoading } = useQuery({
     queryKey: ['collection', id],
@@ -24,7 +26,7 @@ export function CollectionPage() {
   const setSource = usePlayerStore((s) => s.setSource);
 
   if (isLoading) return <Spinner />;
-  if (!col) return <EmptyState>Collection introuvable.</EmptyState>;
+  if (!col) return <EmptyState>{t('collection.notFound')}</EmptyState>;
 
   const tracks = col.tracks ?? [];
   const playAll = () => {
@@ -40,21 +42,22 @@ export function CollectionPage() {
         accent={accent}
         coverUrl={col.coverUrl}
         label={col.name}
-        kicker="Collection"
+        kicker={t('common.collection')}
         title={col.name}
         subtitle={
           <>
-            {col.trackCount} titres · {col.artistCount} artistes ·{' '}
+            {t('count.tracks', { count: col.trackCount })} ·{' '}
+            {t('count.artists', { count: col.artistCount })} ·{' '}
             <DurationText ms={col.durationMs} />
           </>
         }
         actions={<PlayButton onClick={playAll} />}
       />
       <div>
-        {tracks.map((t, i) => (
+        {tracks.map((track, i) => (
           <TrackRow
-            key={t.id}
-            track={t}
+            key={track.id}
+            track={track}
             index={i}
             queue={tracks}
             source={`collection:${col.id}`}

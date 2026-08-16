@@ -7,11 +7,13 @@ import { Spinner } from '@/components/primitives/Spinner';
 import { AlbumsGrid } from '@/features/library/AlbumsGrid';
 import { ArtistsGrid } from '@/features/library/ArtistsGrid';
 import { TrackRow } from '@/features/library/TrackRow';
+import { useT } from '@/i18n';
 import tabStyles from '@/pages/music/MusicHome.module.css';
 
 type Tab = 'tracks' | 'albums' | 'artists';
 
 export function LikesPage() {
+  const t = useT();
   const [tab, setTab] = useState<Tab>('tracks');
   const { data, isLoading } = useQuery({
     queryKey: ['likes'],
@@ -22,7 +24,7 @@ export function LikesPage() {
 
   return (
     <div>
-      <PageHeader title="Favoris" />
+      <PageHeader title={t('nav.likes')} />
 
       <div className={tabStyles.tabs}>
         <button
@@ -30,21 +32,21 @@ export function LikesPage() {
           className={tab === 'tracks' ? tabStyles.tabActive : tabStyles.tab}
           onClick={() => setTab('tracks')}
         >
-          Titres
+          {t('common.tracks')}
         </button>
         <button
           type="button"
           className={tab === 'albums' ? tabStyles.tabActive : tabStyles.tab}
           onClick={() => setTab('albums')}
         >
-          Albums
+          {t('common.albums')}
         </button>
         <button
           type="button"
           className={tab === 'artists' ? tabStyles.tabActive : tabStyles.tab}
           onClick={() => setTab('artists')}
         >
-          Artistes
+          {t('common.artists')}
         </button>
       </div>
 
@@ -52,10 +54,10 @@ export function LikesPage() {
         (isLoading ? (
           <Spinner />
         ) : tracks.length ? (
-          tracks.map((t, i) => (
+          tracks.map((track, i) => (
             <TrackRow
-              key={t.id}
-              track={t}
+              key={track.id}
+              track={track}
               index={i}
               queue={tracks}
               source="likes"
@@ -63,9 +65,7 @@ export function LikesPage() {
             />
           ))
         ) : (
-          <EmptyState>
-            Aucun titre liké. Touche le cœur sur un titre.
-          </EmptyState>
+          <EmptyState>{t('likes.empty')}</EmptyState>
         ))}
 
       {tab === 'albums' && <AlbumsGrid isLiked sort="title" order="asc" />}

@@ -4,6 +4,7 @@ import { albumsApi } from '@/api/albums';
 import { useToast } from '@/components/feedback/Toast';
 import { Button } from '@/components/primitives/Button';
 import { Modal } from '@/components/primitives/Modal';
+import { useT } from '@/i18n';
 import type { AlbumDetail } from '@/types/api';
 
 const label = {
@@ -34,6 +35,7 @@ export function EditAlbumModal({
 }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const t = useT();
   const [title, setTitle] = useState(album.title);
   const [year, setYear] = useState(album.year ? String(album.year) : '');
   const [saving, setSaving] = useState(false);
@@ -48,7 +50,7 @@ export function EditAlbumModal({
         year: Number.isFinite(y) ? y : undefined,
       });
       qc.invalidateQueries();
-      toast('Album enregistré');
+      toast(t('edit.albumSaved'));
       onClose();
     } finally {
       setSaving(false);
@@ -56,15 +58,15 @@ export function EditAlbumModal({
   };
 
   return (
-    <Modal title="Modifier l'album" onClose={onClose}>
-      <span style={label}>Titre de l'album</span>
+    <Modal title={t('edit.albumTitle')} onClose={onClose}>
+      <span style={label}>{t('edit.albumTitleField')}</span>
       <input
         style={input}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         autoFocus
       />
-      <span style={label}>Année</span>
+      <span style={label}>{t('edit.year')}</span>
       <input
         style={input}
         value={year}
@@ -73,7 +75,7 @@ export function EditAlbumModal({
         inputMode="numeric"
       />
       <Button variant="primary" onClick={submit} disabled={!title.trim() || saving}>
-        {saving ? 'Enregistrement…' : 'Enregistrer'}
+        {saving ? t('common.saving') : t('common.save')}
       </Button>
       <p
         style={{
@@ -81,7 +83,7 @@ export function EditAlbumModal({
           color: 'var(--color-text-tertiary)',
         }}
       >
-        Appliqué en base et aux tags de tous les fichiers MP3 de l'album.
+        {t('edit.albumNote')}
       </p>
     </Modal>
   );

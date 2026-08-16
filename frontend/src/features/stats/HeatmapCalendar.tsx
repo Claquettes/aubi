@@ -1,36 +1,13 @@
+import { useT } from '@/i18n';
 import type { HeatmapCell } from '@/types/api';
 import { HEAT_COLORS } from './chartTheme';
-import { dayLabel, duration, int, plural } from './statsFormat';
+import {
+  dayLabel,
+  duration,
+  monthInitials,
+  monthNames,
+} from './statsFormat';
 import styles from './stats.module.css';
-
-const MONTHS_SHORT = [
-  'J',
-  'F',
-  'M',
-  'A',
-  'M',
-  'J',
-  'J',
-  'A',
-  'S',
-  'O',
-  'N',
-  'D',
-];
-const MONTH_NAMES = [
-  'Janv.',
-  'Févr.',
-  'Mars',
-  'Avr.',
-  'Mai',
-  'Juin',
-  'Juil.',
-  'Août',
-  'Sept.',
-  'Oct.',
-  'Nov.',
-  'Déc.',
-];
 
 function iso(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
@@ -39,6 +16,9 @@ function iso(d: Date) {
 }
 
 export function HeatmapCalendar({ cells }: { cells: HeatmapCell[] }) {
+  const t = useT();
+  const shortMonths = monthInitials();
+  const longMonths = monthNames();
   const map = new Map(cells.map((c) => [c.date, c]));
 
   // 53 semaines glissantes, alignées au lundi.
@@ -71,7 +51,7 @@ export function HeatmapCalendar({ cells }: { cells: HeatmapCell[] }) {
                 !prev || prev.getMonth() !== first.getMonth();
               return (
                 <div key={wi} className={styles.heatMonthCell}>
-                  {isNewMonth ? MONTHS_SHORT[first.getMonth()] : ''}
+                  {isNewMonth ? shortMonths[first.getMonth()] : ''}
                 </div>
               );
             })}
@@ -92,10 +72,14 @@ export function HeatmapCalendar({ cells }: { cells: HeatmapCell[] }) {
                         future
                           ? ''
                           : cell
-                            ? `${dayLabel(key)} — ${duration(cell.totalMs)}, ${int(
-                                cell.playCount,
-                              )} lecture${plural(cell.playCount)}`
-                            : `${dayLabel(key)} — rien`
+                            ? t('stats.heat.cell', {
+                                day: dayLabel(key),
+                                duration: duration(cell.totalMs),
+                                plays: t('count.plays', {
+                                  count: cell.playCount,
+                                }),
+                              })
+                            : t('stats.heat.empty', { day: dayLabel(key) })
                       }
                       style={{
                         background: future
@@ -113,7 +97,7 @@ export function HeatmapCalendar({ cells }: { cells: HeatmapCell[] }) {
         </div>
       </div>
       <div className={styles.scaleRow}>
-        <span className={styles.scaleLabel}>Moins</span>
+        <span className={styles.scaleLabel}>{t('stats.chart.less')}</span>
         <span
           className={styles.scaleCell}
           style={{ background: 'var(--chart-empty)' }}
@@ -121,11 +105,11 @@ export function HeatmapCalendar({ cells }: { cells: HeatmapCell[] }) {
         {HEAT_COLORS.map((c) => (
           <span key={c} className={styles.scaleCell} style={{ background: c }} />
         ))}
-        <span className={styles.scaleLabel}>Plus</span>
+        <span className={styles.scaleLabel}>{t('stats.chart.more')}</span>
         <span className={styles.scaleSpacer} />
         <span className={styles.scaleLabel}>
-          {MONTH_NAMES[start.getMonth()]} {start.getFullYear()} →{' '}
-          {MONTH_NAMES[today.getMonth()]} {today.getFullYear()}
+          {longMonths[start.getMonth()]} {start.getFullYear()} →{' '}
+          {longMonths[today.getMonth()]} {today.getFullYear()}
         </span>
       </div>
     </div>

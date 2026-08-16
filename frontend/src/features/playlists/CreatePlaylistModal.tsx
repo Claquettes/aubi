@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { playlistsApi } from '@/api/playlists';
 import { Button } from '@/components/primitives/Button';
 import { Modal } from '@/components/primitives/Modal';
+import { useT } from '@/i18n';
 
 const inputStyle = {
   background: 'var(--color-bg-overlay)',
@@ -24,6 +25,7 @@ export function CreatePlaylistModal({
   onCreated?: (id: string) => void;
 }) {
   const qc = useQueryClient();
+  const t = useT();
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const [saving, setSaving] = useState(false);
@@ -45,10 +47,10 @@ export function CreatePlaylistModal({
   };
 
   return (
-    <Modal title="Nouvelle playlist" onClose={onClose}>
+    <Modal title={t('playlist.createTitle')} onClose={onClose}>
       <input
         style={inputStyle}
-        placeholder="Nom de la playlist"
+        placeholder={t('playlist.namePlaceholder')}
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && submit()}
@@ -56,7 +58,7 @@ export function CreatePlaylistModal({
       />
       <textarea
         style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }}
-        placeholder="Description (optionnel)"
+        placeholder={t('playlist.descPlaceholder')}
         value={desc}
         onChange={(e) => setDesc(e.target.value)}
       />
@@ -65,7 +67,7 @@ export function CreatePlaylistModal({
         onClick={submit}
         disabled={!name.trim() || saving}
       >
-        {saving ? 'Création…' : 'Créer'}
+        {saving ? t('playlist.creating') : t('playlist.create')}
       </Button>
     </Modal>
   );

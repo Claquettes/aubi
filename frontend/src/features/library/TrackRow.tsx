@@ -5,6 +5,7 @@ import { LikeButton } from '@/features/likes/LikeButton';
 import { PlayingIndicator } from '@/features/player/PlayingIndicator';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { useSelection } from '@/features/selection/selectionStore';
+import { useT } from '@/i18n';
 import type { Track } from '@/types/api';
 import { TrackContextMenu } from './TrackContextMenu';
 import styles from './library.module.css';
@@ -24,6 +25,7 @@ export function TrackRow({
   showNumber?: boolean;
   onRemove?: () => void;
 }) {
+  const t = useT();
   const currentId = usePlayerStore((s) => s.currentTrack?.id);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const playTrack = usePlayerStore((s) => s.playTrack);
@@ -80,7 +82,7 @@ export function TrackRow({
           ) : (
             '—'
           )}
-          {track.isCover ? ' · reprise' : ''}
+          {track.isCover ? ` · ${t('track.cover')}` : ''}
         </div>
       </div>
       <div className={styles.rowActions} onClick={(e) => e.stopPropagation()}>
@@ -91,7 +93,7 @@ export function TrackRow({
             type="button"
             className={styles.rowRemove}
             onClick={onRemove}
-            aria-label="Retirer de la playlist"
+            aria-label={t('playlist.removeTrackAria')}
           >
             <X size={15} />
           </button>

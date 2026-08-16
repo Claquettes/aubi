@@ -10,9 +10,11 @@ import { DetailHero } from '@/features/library/DetailHero';
 import { EntityLikeButton } from '@/features/likes/EntityLikeButton';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
+import { useT } from '@/i18n';
 import styles from './ArtistPage.module.css';
 
 export function ArtistPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { data: artist, isLoading } = useQuery({
     queryKey: ['artist', id],
@@ -23,7 +25,7 @@ export function ArtistPage() {
   usePageTheme(artist?.coverUrl);
 
   if (isLoading) return <Spinner />;
-  if (!artist) return <EmptyState>Artiste introuvable.</EmptyState>;
+  if (!artist) return <EmptyState>{t('artist.notFound')}</EmptyState>;
 
   const albums = artist.albums ?? [];
   const tracks = artist.tracks ?? [];
@@ -35,19 +37,17 @@ export function ArtistPage() {
         round
         coverUrl={artist.coverUrl}
         label={artist.name}
-        kicker="Artiste"
+        kicker={t('common.artist')}
         title={artist.name}
         subtitle={
           <>
             {albums.length > 0 && (
-              <>
-                {albums.length} album{albums.length > 1 ? 's' : ''} ·{' '}
-              </>
+              <>{t('count.albums', { count: albums.length })} · </>
             )}
-            {artist.trackCount} titre{artist.trackCount > 1 ? 's' : ''}
+            {t('count.tracks', { count: artist.trackCount })}
             <br />
             {/* Somme des écoutes de tous les titres de l'artiste. */}
-            {artist.playCount} écoute{artist.playCount > 1 ? 's' : ''}
+            {t('count.listens', { count: artist.playCount })}
           </>
         }
         actions={
@@ -62,7 +62,7 @@ export function ArtistPage() {
 
       {albums.length > 0 && (
         <>
-          <h2 className={styles.sectionTitle}>Albums</h2>
+          <h2 className={styles.sectionTitle}>{t('common.albums')}</h2>
           <Grid>
             {albums.map((a) => (
               <AlbumCard key={a.id} album={a} />
@@ -73,12 +73,12 @@ export function ArtistPage() {
 
       {tracks.length > 0 && (
         <>
-          <h2 className={styles.sectionTitle}>Titres</h2>
+          <h2 className={styles.sectionTitle}>{t('common.tracks')}</h2>
           <div>
-            {tracks.map((t, i) => (
+            {tracks.map((track, i) => (
               <TrackRow
-                key={t.id}
-                track={t}
+                key={track.id}
+                track={track}
                 index={i}
                 queue={tracks}
                 source={`artist:${artist.id}`}
@@ -90,7 +90,7 @@ export function ArtistPage() {
       )}
 
       {albums.length === 0 && tracks.length === 0 && (
-        <EmptyState>Aucun contenu pour cet artiste.</EmptyState>
+        <EmptyState>{t('artist.empty')}</EmptyState>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { playlistsApi } from '@/api/playlists';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Modal } from '@/components/primitives/Modal';
+import { useT } from '@/i18n';
 import type { Track } from '@/types/api';
 import { CreatePlaylistModal } from './CreatePlaylistModal';
 
@@ -31,6 +32,7 @@ export function AddToPlaylistModal({
   onClose: () => void;
 }) {
   const qc = useQueryClient();
+  const t = useT();
   const { data } = useQuery({
     queryKey: ['playlists'],
     queryFn: () => playlistsApi.list(),
@@ -56,13 +58,13 @@ export function AddToPlaylistModal({
   }
 
   return (
-    <Modal title="Ajouter à une playlist" onClose={onClose}>
+    <Modal title={t('playlist.addTo')} onClose={onClose}>
       <button
         type="button"
         style={{ ...itemStyle, color: 'var(--color-accent)' }}
         onClick={() => setCreating(true)}
       >
-        <Plus size={18} /> Nouvelle playlist
+        <Plus size={18} /> {t('playlist.addNew')}
       </button>
       {playlists.length ? (
         playlists.map((pl) => (
@@ -76,7 +78,7 @@ export function AddToPlaylistModal({
           </button>
         ))
       ) : (
-        <EmptyState>Crée ta première playlist.</EmptyState>
+        <EmptyState>{t('playlist.addEmpty')}</EmptyState>
       )}
     </Modal>
   );

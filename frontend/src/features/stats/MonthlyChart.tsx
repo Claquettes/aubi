@@ -7,12 +7,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useT } from '@/i18n';
 import type { MonthlyStat } from '@/types/api';
 import { axisProps, ChartTooltip, gridProps } from './chartTheme';
 import { duration, int, monthLabel } from './statsFormat';
 
 /** Volume écouté mois par mois — une série, barres à extrémité arrondie. */
 export function MonthlyChart({ data }: { data: MonthlyStat[] }) {
+  const t = useT();
   const chartData = data.map((d) => ({
     month: d.month,
     label: monthLabel(d.month),
@@ -46,12 +48,18 @@ export function MonthlyChart({ data }: { data: MonthlyStat[] }) {
                   p
                     ? [
                         {
-                          name: 'Écoute',
+                          name: t('stats.chart.listening'),
                           value: duration(p.ms),
                           color: 'var(--chart-1)',
                         },
-                        { name: 'Lectures', value: int(p.plays) },
-                        { name: 'Titres différents', value: int(p.tracks) },
+                        {
+                          name: t('stats.chart.plays'),
+                          value: int(p.plays),
+                        },
+                        {
+                          name: t('stats.chart.distinctTracks'),
+                          value: int(p.tracks),
+                        },
                       ]
                     : []
                 }

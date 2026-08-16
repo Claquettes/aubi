@@ -10,9 +10,11 @@ import { ArtistCard } from '@/features/library/ArtistCard';
 import { SectionHeader } from '@/features/library/SectionHeader';
 import { TrackRow } from '@/features/library/TrackRow';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useT } from '@/i18n';
 import styles from './SearchPage.module.css';
 
 export function SearchPage() {
+  const t = useT();
   const [q, setQ] = useState('');
   const dq = useDebounce(q.trim(), 300);
   const { data, isFetching } = useQuery({
@@ -31,10 +33,10 @@ export function SearchPage() {
 
   return (
     <div>
-      <PageHeader title="Recherche" />
+      <PageHeader title={t('nav.search')} />
       <input
         className={styles.input}
-        placeholder="Rechercher un titre, un album, un artiste…"
+        placeholder={t('search.placeholder')}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         autoFocus
@@ -46,7 +48,7 @@ export function SearchPage() {
         <>
           {data.artists.length > 0 && (
             <>
-              <SectionHeader title="Artistes" />
+              <SectionHeader title={t('common.artists')} />
               <Grid>
                 {data.artists.map((a) => (
                   <ArtistCard key={a.id} artist={a} />
@@ -56,7 +58,7 @@ export function SearchPage() {
           )}
           {data.albums.length > 0 && (
             <>
-              <SectionHeader title="Albums" />
+              <SectionHeader title={t('common.albums')} />
               <Grid>
                 {data.albums.map((a) => (
                   <AlbumCard key={a.id} album={a} />
@@ -66,11 +68,11 @@ export function SearchPage() {
           )}
           {data.tracks.length > 0 && (
             <>
-              <SectionHeader title="Titres" />
-              {data.tracks.map((t, i) => (
+              <SectionHeader title={t('common.tracks')} />
+              {data.tracks.map((track, i) => (
                 <TrackRow
-                  key={t.id}
-                  track={t}
+                  key={track.id}
+                  track={track}
                   index={i}
                   queue={data.tracks}
                   source="search"
@@ -79,12 +81,14 @@ export function SearchPage() {
               ))}
             </>
           )}
-          {empty && <EmptyState>Aucun résultat pour « {dq} ».</EmptyState>}
+          {empty && (
+            <EmptyState>{t('search.noResult', { query: dq })}</EmptyState>
+          )}
         </>
       )}
 
       {dq.length < 2 && !isFetching && (
-        <EmptyState>Tape au moins 2 caractères pour rechercher.</EmptyState>
+        <EmptyState>{t('search.tooShort')}</EmptyState>
       )}
     </div>
   );

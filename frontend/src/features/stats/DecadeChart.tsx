@@ -7,12 +7,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useT } from '@/i18n';
 import type { LibraryStats } from '@/types/api';
 import { axisProps, ChartTooltip, gridProps } from './chartTheme';
 import { int } from './statsFormat';
 
 /** Albums de la bibliothèque par décennie de sortie. */
 export function DecadeChart({ data }: { data: LibraryStats['byDecade'] }) {
+  const t = useT();
   const chartData = data.map((d) => ({
     label: `${d.decade}s`,
     albums: d.albumCount,
@@ -43,11 +45,11 @@ export function DecadeChart({ data }: { data: LibraryStats['byDecade'] }) {
                   p
                     ? [
                         {
-                          name: 'Albums',
+                          name: t('stats.chart.albums'),
                           value: int(p.albums),
                           color: 'var(--chart-1)',
                         },
-                        { name: 'Titres', value: int(p.tracks) },
+                        { name: t('stats.chart.tracks'), value: int(p.tracks) },
                       ]
                     : []
                 }

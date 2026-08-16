@@ -11,8 +11,10 @@ import { Button } from '@/components/primitives/Button';
 import { CreatePlaylistModal } from '@/features/playlists/CreatePlaylistModal';
 import { PlaylistCard } from '@/features/playlists/PlaylistCard';
 import { AlbumCard } from '@/features/library/AlbumCard';
+import { useT } from '@/i18n';
 
 export function PlaylistList() {
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ['playlists'],
@@ -37,7 +39,7 @@ export function PlaylistList() {
   return (
     <div>
       <PageHeader
-        title="Playlists"
+        title={t('nav.playlists')}
         actions={
           <Button variant="ghost" onClick={() => setCreating(true)}>
             <span
@@ -47,7 +49,7 @@ export function PlaylistList() {
                 gap: 'var(--space-2)',
               }}
             >
-              <Plus size={16} /> Nouvelle
+              <Plus size={16} /> {t('playlist.new')}
             </span>
           </Button>
         }
@@ -64,7 +66,7 @@ export function PlaylistList() {
           ))}
         </Grid>
       ) : (
-        <EmptyState>Aucune playlist. Crée-en une avec « Nouvelle ».</EmptyState>
+        <EmptyState>{t('playlist.empty')}</EmptyState>
       )}
       {creating && <CreatePlaylistModal onClose={() => setCreating(false)} />}
     </div>

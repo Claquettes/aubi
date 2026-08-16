@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/layout/EmptyState';
+import { localeTag, useT } from '@/i18n';
 import type { StatsRecords } from '@/types/api';
-import { dayLabel, duration, int, monthLabel, plural } from './statsFormat';
+import { dayLabel, duration, int, monthLabel } from './statsFormat';
 import styles from './stats.module.css';
 
 function Card({
@@ -24,64 +25,69 @@ function Card({
 
 /** Les faits marquants de la période, en phrases plutôt qu'en chiffres nus. */
 export function RecordsPanel({ data }: { data: StatsRecords }) {
+  const t = useT();
   const cards: { kicker: string; value: ReactNode; detail: ReactNode }[] = [];
 
   if (data.bestDay) {
     cards.push({
-      kicker: 'Meilleure journée',
+      kicker: t('stats.record.bestDay'),
       value: duration(data.bestDay.totalMs),
-      detail: `${dayLabel(data.bestDay.date)} · ${int(
-        data.bestDay.playCount,
-      )} lecture${plural(data.bestDay.playCount)}`,
+      detail: `${dayLabel(data.bestDay.date)} · ${t('count.plays', {
+        count: data.bestDay.playCount,
+      })}`,
     });
   }
   if (data.longestSession?.startedAt) {
     const d = new Date(data.longestSession.startedAt);
     cards.push({
-      kicker: 'Plus longue session',
+      kicker: t('stats.record.longestSession'),
       value: duration(data.longestSession.totalMs),
-      detail: `${d.toLocaleDateString('fr-FR', {
-        day: 'numeric',
-        month: 'long',
-      })} · ${int(data.longestSession.playCount)} titre${plural(
-        data.longestSession.playCount,
-      )} d'affilée`,
+      detail: t('stats.record.longestSessionDetail', {
+        date: d.toLocaleDateString(localeTag(), {
+          day: 'numeric',
+          month: 'long',
+        }),
+        count: data.longestSession.playCount,
+      }),
     });
   }
   if (data.obsession) {
     cards.push({
-      kicker: 'Obsession',
-      value: `${int(data.obsession.playCount)} ×`,
+      kicker: t('stats.record.obsession'),
+      value: t('stats.record.obsessionTimes', {
+        count: int(data.obsession.playCount),
+      }),
       detail: (
         <>
-          « {data.obsession.title} »
+          {t('common.quote', { text: data.obsession.title })}
           {data.obsession.artistName ? ` — ${data.obsession.artistName}` : ''}
           <br />
-          en une journée, le {dayLabel(data.obsession.date)}
+          {t('stats.record.obsessionDetail', {
+            date: dayLabel(data.obsession.date),
+          })}
         </>
       ),
     });
   }
   if (data.bestMonth) {
     cards.push({
-      kicker: 'Meilleur mois',
+      kicker: t('stats.record.bestMonth'),
       value: monthLabel(data.bestMonth.month),
-      detail: `${duration(data.bestMonth.totalMs)} · ${int(
-        data.bestMonth.playCount,
-      )} lecture${plural(data.bestMonth.playCount)}`,
+      detail: `${duration(data.bestMonth.totalMs)} · ${t('count.plays', {
+        count: data.bestMonth.playCount,
+      })}`,
     });
   }
   cards.push({
-    kicker: 'Découvertes',
+    kicker: t('stats.record.discoveries'),
     value: int(data.discoveredTracks),
-    detail: `titre${plural(data.discoveredTracks)} entendu${plural(
-      data.discoveredTracks,
-    )} pour la première fois · ${int(data.discoveredArtists)} artiste${plural(
-      data.discoveredArtists,
-    )}`,
+    detail: t('stats.record.discoveriesDetail', {
+      count: data.discoveredTracks,
+      artists: t('count.artists', { count: data.discoveredArtists }),
+    }),
   });
 
-  if (!data.bestDay) return <EmptyState>Rien à raconter pour l'instant.</EmptyState>;
+  if (!data.bestDay) return <EmptyState>{t('stats.record.empty')}</EmptyState>;
 
   return (
     <div className={styles.recordGrid}>

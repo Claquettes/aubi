@@ -7,15 +7,17 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useT } from '@/i18n';
 import type { ListeningPatterns } from '@/types/api';
 import { axisProps, ChartTooltip, gridProps } from './chartTheme';
-import { duration, int } from './statsFormat';
+import { duration, hourTick, int } from './statsFormat';
 
 /** Horloge d'écoute : combien de titres lancés à chaque heure de la journée. */
 export function HourChart({ data }: { data: ListeningPatterns['byHour'] }) {
+  const t = useT();
   const chartData = data.map((d) => ({
     hour: d.hour,
-    label: d.hour % 3 === 0 ? `${d.hour}h` : '',
+    label: d.hour % 3 === 0 ? hourTick(d.hour) : '',
     plays: d.playCount,
     ms: d.totalMs,
   }));
@@ -39,16 +41,26 @@ export function HourChart({ data }: { data: ListeningPatterns['byHour'] }) {
             return (
               <ChartTooltip
                 active={active && !!p}
-                label={p ? `${p.hour}h – ${p.hour + 1}h` : ''}
+                label={
+                  p
+                    ? t('stats.chart.hourRange', {
+                        from: p.hour,
+                        to: p.hour + 1,
+                      })
+                    : ''
+                }
                 rows={
                   p
                     ? [
                         {
-                          name: 'Lectures',
+                          name: t('stats.chart.plays'),
                           value: int(p.plays),
                           color: 'var(--chart-1)',
                         },
-                        { name: 'Écoute', value: duration(p.ms) },
+                        {
+                          name: t('stats.chart.listening'),
+                          value: duration(p.ms),
+                        },
                       ]
                     : []
                 }

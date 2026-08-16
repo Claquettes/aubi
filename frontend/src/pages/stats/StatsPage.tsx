@@ -31,28 +31,36 @@ import {
   hours,
   int,
   percent,
-  plural,
   sectionLabel,
 } from '@/features/stats/statsFormat';
+import { useT, type TKey } from '@/i18n';
 import type { StatsPeriod } from '@/types/api';
 import styles from '@/features/stats/stats.module.css';
 
 type Tab = 'overview' | 'habits' | 'artists' | 'albums' | 'tracks' | 'library';
 
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'overview', label: "Vue d'ensemble" },
-  { key: 'habits', label: 'Habitudes' },
-  { key: 'artists', label: 'Artistes' },
-  { key: 'albums', label: 'Albums' },
-  { key: 'tracks', label: 'Titres' },
-  { key: 'library', label: 'Bibliothèque' },
+const TAB_KEYS: { key: Tab; label: TKey }[] = [
+  { key: 'overview', label: 'stats.tab.overview' },
+  { key: 'habits', label: 'stats.tab.habits' },
+  { key: 'artists', label: 'stats.tab.artists' },
+  { key: 'albums', label: 'stats.tab.albums' },
+  { key: 'tracks', label: 'stats.tab.tracks' },
+  { key: 'library', label: 'stats.tab.library' },
 ];
 
-const PERIOD_LABEL: Record<StatsPeriod, string> = {
-  week: 'sur 7 jours',
-  month: 'sur 30 jours',
-  year: 'sur 1 an',
-  all: 'depuis le début',
+const PERIOD_LABEL: Record<StatsPeriod, TKey> = {
+  week: 'stats.periodLabel.week',
+  month: 'stats.periodLabel.month',
+  year: 'stats.periodLabel.year',
+  all: 'stats.periodLabel.all',
+};
+
+/** Créneaux horaires : le serveur renvoie un libellé français, on traduit sur la clé. */
+const SLOT_LABEL: Record<string, TKey> = {
+  night: 'stats.slot.night',
+  morning: 'stats.slot.morning',
+  afternoon: 'stats.slot.afternoon',
+  evening: 'stats.slot.evening',
 };
 
 function isoDaysAgo(n: number) {
@@ -62,6 +70,7 @@ function isoDaysAgo(n: number) {
 }
 
 export function StatsPage() {
+  const t = useT();
   const [period, setPeriod] = useState<StatsPeriod>('all');
   const [tab, setTab] = useState<Tab>('overview');
   const args: RangeArgs = { period };
@@ -136,14 +145,16 @@ export function StatsPage() {
   });
 
   const o = overview.data;
+  const periodLabel = t(PERIOD_LABEL[period]);
+  const tabs = TAB_KEYS.map((tab) => ({ key: tab.key, label: t(tab.label) }));
 
   return (
     <div>
       <PageHeader
-        title="Statistiques"
+        title={t('nav.stats')}
         actions={<PeriodSelector value={period} onChange={setPeriod} />}
       />
-      <TabBar tabs={TABS} value={tab} onChange={setTab} />
+      <TabBar tabs={tabs} value={tab} onChange={setTab} />
 
       {overview.isLoading && <Spinner />}
 
@@ -151,54 +162,68 @@ export function StatsPage() {
         <>
           {o.totalPlayEvents === 0 ? (
             <EmptyState>
-              Aucune écoute {PERIOD_LABEL[period]} — lance un titre, tout se
-              remplit ensuite.
+              {t('stats.emptyPeriod', { period: periodLabel })}
             </EmptyState>
           ) : (
             <StatTiles
               columns={4}
               tiles={[
                 {
-                  label: "Heures d'écoute",
+                  label: t('stats.tile.hours'),
                   value: hours(o.totalListenedMs),
                   hint: duration(o.totalListenedMs),
                 },
                 {
-                  label: 'Lectures',
+                  label: t('stats.tile.plays'),
                   value: int(o.totalPlayEvents),
-                  hint: `${percent(o.completedRate)} jusqu'au bout`,
+                  hint: t('stats.tile.playsHint', {
+                    percent: percent(o.completedRate),
+                  }),
                 },
                 {
-                  label: 'Titres différents',
+                  label: t('stats.tile.distinctTracks'),
                   value: int(o.distinctTracksPlayed),
-                  hint: `${percent(o.libraryCoverage, 1)} de la bibliothèque`,
+                  hint: t('stats.tile.distinctTracksHint', {
+                    percent: percent(o.libraryCoverage, 1),
+                  }),
                 },
                 {
-                  label: 'Artistes différents',
+                  label: t('stats.tile.distinctArtists'),
                   value: int(o.distinctArtistsPlayed),
-                  hint: `sur ${int(o.totalArtists)} au catalogue`,
+                  hint: t('stats.tile.distinctArtistsHint', {
+                    count: int(o.totalArtists),
+                  }),
                 },
                 {
-                  label: 'Jours actifs',
+                  label: t('stats.tile.activeDays'),
                   value: int(o.activeDays),
-                  hint: `${duration(o.avgDailyMs)} par jour actif`,
+                  hint: t('stats.tile.activeDaysHint', {
+                    duration: duration(o.avgDailyMs),
+                  }),
                 },
                 {
-                  label: 'Albums lancés',
+                  label: t('stats.tile.albumPlays'),
                   value: int(o.totalAlbumPlays),
-                  hint: `${int(o.distinctAlbumsPlayed)} albums touchés`,
+                  hint: t('stats.tile.albumPlaysHint', {
+                    count: int(o.distinctAlbumsPlayed),
+                  }),
                 },
                 {
-                  label: 'Série en cours',
-                  value: `${o.currentStreak} j`,
-                  hint: `record ${o.longestStreak} j`,
+                  label: t('stats.tile.streak'),
+                  value: t('stats.tile.streakValue', {
+                    count: o.currentStreak,
+                  }),
+                  hint: t('stats.tile.streakHint', {
+                    count: o.longestStreak,
+                  }),
                 },
                 {
-                  label: 'Titres aimés',
+                  label: t('stats.tile.likedTracks'),
                   value: int(o.likedTracks),
-                  hint: `${int(o.likedAlbums)} album${plural(
-                    o.likedAlbums,
-                  )} · ${int(o.likedArtists)} artiste${plural(o.likedArtists)}`,
+                  hint: t('stats.tile.likedHint', {
+                    albums: t('count.albums', { count: o.likedAlbums }),
+                    artists: t('count.artists', { count: o.likedArtists }),
+                  }),
                 },
               ]}
             />
@@ -206,33 +231,33 @@ export function StatsPage() {
 
           <div className={styles.twoCol}>
             <Block
-              title={`Écoute · ${PERIOD_LABEL[period]}`}
-              caption="Minutes écoutées par jour."
+              title={t('stats.block.listening', { period: periodLabel })}
+              caption={t('stats.block.listeningCaption')}
             >
               {daily.data?.data.some((d) => d.totalMs > 0) ? (
                 <ListeningChart data={daily.data.data} />
               ) : (
-                <EmptyState>Pas encore d'écoute enregistrée.</EmptyState>
+                <EmptyState>{t('stats.block.noListening')}</EmptyState>
               )}
             </Block>
             {/* Un camembert à une seule part n'apprend rien : quand tout est
                 musique, on montre plutôt le haut du classement. */}
             {o.bySection.length > 1 ? (
-              <Block title="Par catégorie">
+              <Block title={t('stats.block.bySection')}>
                 <SectionDonut data={o.bySection} />
               </Block>
             ) : (
-              <Block title="Artistes du moment">
+              <Block title={t('stats.block.currentArtists')}>
                 {topPreview.data?.data.length ? (
                   <TopArtistsList items={topPreview.data.data} />
                 ) : (
-                  <EmptyState>Aucune écoute sur cette période.</EmptyState>
+                  <EmptyState>{t('stats.noPlaysPeriod')}</EmptyState>
                 )}
               </Block>
             )}
           </div>
 
-          <Block title="Faits marquants">
+          <Block title={t('stats.block.records')}>
             {records.data ? (
               <RecordsPanel data={records.data} />
             ) : (
@@ -241,17 +266,17 @@ export function StatsPage() {
           </Block>
 
           <Block
-            title="Activité · 12 mois"
-            caption="Une case par jour, teinte selon le temps d'écoute."
+            title={t('stats.block.activity')}
+            caption={t('stats.block.activityCaption')}
           >
             <HeatmapCalendar cells={heat.data?.data ?? []} />
           </Block>
 
-          <Block title="Dernières écoutes">
+          <Block title={t('stats.block.recent')}>
             {recent.data?.data.length ? (
               <RecentPlays items={recent.data.data} />
             ) : (
-              <EmptyState>Rien pour l'instant.</EmptyState>
+              <EmptyState>{t('stats.nothingYet')}</EmptyState>
             )}
           </Block>
         </>
@@ -266,36 +291,41 @@ export function StatsPage() {
               <StatTiles
                 columns={4}
                 tiles={patterns.data.slots.map((s) => ({
-                  label: s.label,
+                  label: SLOT_LABEL[s.key] ? t(SLOT_LABEL[s.key]) : s.label,
                   value: duration(s.totalMs),
-                  hint: `${int(s.playCount)} lecture${plural(s.playCount)}`,
+                  hint: t('count.plays', { count: s.playCount }),
                 }))}
               />
               <div className={styles.twoCol}>
                 <Block
-                  title="Heure de la journée"
+                  title={t('stats.block.hour')}
                   caption={
                     patterns.data.peakHour != null
-                      ? `Pic d'écoute vers ${patterns.data.peakHour}h.`
+                      ? t('stats.block.hourCaption', {
+                          hour: patterns.data.peakHour,
+                        })
                       : undefined
                   }
                 >
                   <HourChart data={patterns.data.byHour} />
                 </Block>
-                <Block title="Jour de la semaine">
+                <Block title={t('stats.block.weekday')}>
                   <WeekdayChart data={patterns.data.byWeekday} />
                 </Block>
               </div>
               <Block
-                title="Semaine type"
-                caption="Croisement jour × heure : où se logent réellement les écoutes."
+                title={t('stats.block.punchcard')}
+                caption={t('stats.block.punchcardCaption')}
               >
                 <Punchcard cells={patterns.data.punchcard} />
               </Block>
             </>
           ) : null}
 
-          <Block title="Mois par mois" caption="Volume écouté sur 12 mois.">
+          <Block
+            title={t('stats.block.monthly')}
+            caption={t('stats.block.monthlyCaption')}
+          >
             {monthly.data ? (
               <MonthlyChart data={monthly.data.data} />
             ) : (
@@ -303,8 +333,8 @@ export function StatsPage() {
             )}
           </Block>
           <Block
-            title="Découvertes"
-            caption="Titres et artistes entendus pour la première fois."
+            title={t('stats.block.discovery')}
+            caption={t('stats.block.discoveryCaption')}
           >
             {monthly.data ? (
               <DiscoveryChart data={monthly.data.data} />
@@ -317,42 +347,42 @@ export function StatsPage() {
 
       {tab === 'artists' && (
         <Block
-          title={`Top artistes · ${PERIOD_LABEL[period]}`}
-          caption="Les featurings comptent pour les deux artistes."
+          title={t('stats.block.topArtists', { period: periodLabel })}
+          caption={t('stats.block.topArtistsCaption')}
         >
           {topArtists.isLoading ? (
             <Spinner />
           ) : topArtists.data?.data.length ? (
             <TopArtistsList items={topArtists.data.data} />
           ) : (
-            <EmptyState>Aucune écoute sur cette période.</EmptyState>
+            <EmptyState>{t('stats.noPlaysPeriod')}</EmptyState>
           )}
         </Block>
       )}
 
       {tab === 'albums' && (
         <Block
-          title={`Top albums · ${PERIOD_LABEL[period]}`}
-          caption="La jauge indique la part de l'album réellement parcourue."
+          title={t('stats.block.topAlbums', { period: periodLabel })}
+          caption={t('stats.block.topAlbumsCaption')}
         >
           {topAlbums.isLoading ? (
             <Spinner />
           ) : topAlbums.data?.data.length ? (
             <TopAlbumsGrid items={topAlbums.data.data} />
           ) : (
-            <EmptyState>Aucune écoute sur cette période.</EmptyState>
+            <EmptyState>{t('stats.noPlaysPeriod')}</EmptyState>
           )}
         </Block>
       )}
 
       {tab === 'tracks' && (
-        <Block title={`Top titres · ${PERIOD_LABEL[period]}`}>
+        <Block title={t('stats.block.topTracks', { period: periodLabel })}>
           {topTracks.isLoading ? (
             <Spinner />
           ) : topTracks.data?.data.length ? (
             <TopTracksList items={topTracks.data.data} />
           ) : (
-            <EmptyState>Aucune écoute sur cette période.</EmptyState>
+            <EmptyState>{t('stats.noPlaysPeriod')}</EmptyState>
           )}
         </Block>
       )}
@@ -363,9 +393,13 @@ export function StatsPage() {
           {library.data && <LibraryPanel data={library.data} />}
           {o && (
             <p className={styles.footnote}>
-              {int(o.totalTracks)} titres · {int(o.totalAlbums)} albums ·{' '}
-              {int(o.totalArtists)} artistes · {bytes(o.librarySizeBytes)} ·
-              catégorie dominante&nbsp;: {sectionLabel(o.mostPlayedSection)}.
+              {t('stats.footnote', {
+                tracks: int(o.totalTracks),
+                albums: int(o.totalAlbums),
+                artists: int(o.totalArtists),
+                size: bytes(o.librarySizeBytes),
+                section: sectionLabel(o.mostPlayedSection),
+              })}
             </p>
           )}
         </>

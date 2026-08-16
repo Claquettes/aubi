@@ -16,12 +16,14 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useT } from '@/i18n';
 import { GraphCanvas } from './GraphCanvas';
 import type { GraphCanvasHandle } from './GraphCanvas';
 import { buildGraphLayout } from './graphLayout';
 import styles from './GraphPage.module.css';
 
 export function GraphPage() {
+  const t = useT();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['graph'],
     queryFn: () => graphApi.collaborations(),
@@ -136,7 +138,7 @@ export function GraphPage() {
   if (isLoading) {
     return (
       <div>
-        <PageHeader title="Graphe" />
+        <PageHeader title={t('nav.graph')} />
         <div className={styles.center}>
           <Spinner />
         </div>
@@ -147,11 +149,8 @@ export function GraphPage() {
   if (isError) {
     return (
       <div>
-        <PageHeader title="Graphe" />
-        <EmptyState mark="⚠">
-          Impossible de charger le graphe. Vérifie que le serveur répond, puis
-          recharge la page.
-        </EmptyState>
+        <PageHeader title={t('nav.graph')} />
+        <EmptyState mark="⚠">{t('graph.error')}</EmptyState>
       </div>
     );
   }
@@ -159,11 +158,8 @@ export function GraphPage() {
   if (!layout || !layout.nodes.length) {
     return (
       <div>
-        <PageHeader title="Graphe" />
-        <EmptyState>
-          Pas encore de collaborations à visualiser. Le graphe relie les artistes
-          qui partagent un titre.
-        </EmptyState>
+        <PageHeader title={t('nav.graph')} />
+        <EmptyState>{t('graph.empty')}</EmptyState>
       </div>
     );
   }
@@ -172,11 +168,13 @@ export function GraphPage() {
     <div className={expanded ? styles.expanded : undefined}>
       {!expanded && (
         <>
-          <PageHeader title="Graphe" />
+          <PageHeader title={t('nav.graph')} />
           <p className={styles.hint}>
-            {layout.nodes.length} artistes, {layout.edges.length} collaborations,{' '}
-            {layout.clusterCount} groupes. Taille du point = nombre de titres,
-            épaisseur du trait = collaborations partagées, teinte = réseau.
+            {t('graph.hint', {
+              artists: layout.nodes.length,
+              edges: layout.edges.length,
+              clusters: layout.clusterCount,
+            })}
           </p>
         </>
       )}
@@ -186,20 +184,20 @@ export function GraphPage() {
           <Search size={16} className={styles.searchIcon} aria-hidden="true" />
           <input
             className={styles.searchInput}
-            placeholder="Rechercher un artiste…"
+            placeholder={t('graph.searchPlaceholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && matches?.length) focusNode(matches[0]);
             }}
-            aria-label="Rechercher un artiste dans le graphe"
+            aria-label={t('graph.searchAria')}
           />
           {query && (
             <button
               type="button"
               className={styles.searchClear}
               onClick={() => setQuery('')}
-              aria-label="Effacer la recherche"
+              aria-label={t('graph.clearAria')}
             >
               <X size={15} />
             </button>
@@ -208,8 +206,8 @@ export function GraphPage() {
         {matches && (
           <span className={styles.count}>
             {matches.length === 0
-              ? 'aucun résultat'
-              : `${matches.length} résultat${matches.length > 1 ? 's' : ''}`}
+              ? t('graph.noResult')
+              : t('count.results', { count: matches.length })}
           </span>
         )}
       </div>
@@ -244,28 +242,30 @@ export function GraphPage() {
           <button
             type="button"
             onClick={() => canvasRef.current?.zoomBy(1.3)}
-            aria-label="Zoomer"
+            aria-label={t('graph.zoomIn')}
           >
             <Plus size={18} />
           </button>
           <button
             type="button"
             onClick={() => canvasRef.current?.zoomBy(1 / 1.3)}
-            aria-label="Dézoomer"
+            aria-label={t('graph.zoomOut')}
           >
             <Minus size={18} />
           </button>
           <button
             type="button"
             onClick={() => canvasRef.current?.fit()}
-            aria-label="Tout afficher"
+            aria-label={t('graph.fit')}
           >
             <Locate size={18} />
           </button>
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            aria-label={expanded ? 'Quitter le plein écran' : 'Plein écran'}
+            aria-label={
+              expanded ? t('graph.exitFullscreen') : t('graph.fullscreen')
+            }
           >
             {expanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
           </button>
@@ -277,14 +277,14 @@ export function GraphPage() {
               type="button"
               className={styles.cardClose}
               onClick={() => setSelected(null)}
-              aria-label="Fermer"
+              aria-label={t('common.close')}
             >
               <X size={15} />
             </button>
             <h2 className={styles.cardTitle}>{node.name}</h2>
             <p className={styles.cardMeta}>
-              {node.trackCount} titre{node.trackCount > 1 ? 's' : ''} ·{' '}
-              {node.degree} collaborateur{node.degree > 1 ? 's' : ''}
+              {t('count.tracks', { count: node.trackCount })} ·{' '}
+              {t('count.collaborators', { count: node.degree })}
             </p>
             {collaborators.length > 0 && (
               <div className={styles.cardChips}>
@@ -294,7 +294,7 @@ export function GraphPage() {
                     type="button"
                     className={styles.chip}
                     onClick={() => focusNode(c.index)}
-                    title={`${c.weight} titre${c.weight > 1 ? 's' : ''} en commun`}
+                    title={t('count.commonTracks', { count: c.weight })}
                   >
                     {layout.nodes[c.index].name}
                   </button>
@@ -306,7 +306,7 @@ export function GraphPage() {
               className={styles.cardAction}
               onClick={() => navigate(`/music/artists/${node.id}`)}
             >
-              Ouvrir la page artiste
+              {t('graph.openArtist')}
               <ArrowRight size={15} />
             </button>
           </aside>
@@ -314,9 +314,7 @@ export function GraphPage() {
       </div>
 
       <p className={styles.legend}>
-        {dense
-          ? 'Touche un point pour le détail, double-touche pour ouvrir l’artiste · pince pour zoomer.'
-          : 'Clique un point pour le détail, double-clic pour ouvrir l’artiste · glisse pour déplacer, molette pour zoomer.'}
+        {dense ? t('graph.legendTouch') : t('graph.legendMouse')}
       </p>
     </div>
   );

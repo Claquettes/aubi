@@ -5,8 +5,10 @@ import { Grid } from '@/components/layout/Grid';
 import { EmptyState } from '@/components/layout/EmptyState';
 import { Spinner } from '@/components/primitives/Spinner';
 import { ConcertCard } from '@/features/library/ConcertCard';
+import { useT } from '@/i18n';
 
 export function ConcertList() {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['concerts'],
     queryFn: () => concertsApi.list({ limit: 200 }),
@@ -17,7 +19,7 @@ export function ConcertList() {
 
   return (
     <div>
-      <PageHeader title="Concerts" />
+      <PageHeader title={t('nav.concerts')} />
       {concerts.length ? (
         <Grid>
           {concerts.map((c) => (
@@ -25,9 +27,7 @@ export function ConcertList() {
           ))}
         </Grid>
       ) : (
-        <EmptyState>
-          Aucun concert. Ajoute des enregistrements dans le dossier concerts.
-        </EmptyState>
+        <EmptyState>{t('concert.empty')}</EmptyState>
       )}
     </div>
   );

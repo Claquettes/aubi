@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { EmptyState } from '@/components/layout/EmptyState';
+import { useT } from '@/i18n';
 import type { SectionSplit } from '@/types/api';
 import { CHART_COLORS, ChartLegend, ChartTooltip } from './chartTheme';
 import { duration, percent, sectionLabel } from './statsFormat';
@@ -8,6 +9,7 @@ import styles from './stats.module.css';
 /** Répartition musique / concerts / livres audio. Trois créneaux au plus :
  *  ce sont les trois teintes qui passent aussi le test « toutes paires ». */
 export function SectionDonut({ data }: { data: SectionSplit[] }) {
+  const t = useT();
   const items = data
     .filter((d) => d.totalMs > 0)
     .map((d, i) => ({
@@ -16,7 +18,7 @@ export function SectionDonut({ data }: { data: SectionSplit[] }) {
       color: CHART_COLORS[i % CHART_COLORS.length],
     }));
 
-  if (!items.length) return <EmptyState>Pas encore de données.</EmptyState>;
+  if (!items.length) return <EmptyState>{t('stats.chart.noData')}</EmptyState>;
 
   const total = items.reduce((a, b) => a + b.value, 0);
 
@@ -52,11 +54,14 @@ export function SectionDonut({ data }: { data: SectionSplit[] }) {
                       p
                         ? [
                             {
-                              name: 'Écoute',
+                              name: t('stats.chart.listening'),
                               value: duration(p.value),
                               color: p.color,
                             },
-                            { name: 'Part', value: percent(p.value / total, 1) },
+                            {
+                              name: t('stats.chart.share'),
+                              value: percent(p.value / total, 1),
+                            },
                           ]
                         : []
                     }
@@ -68,7 +73,7 @@ export function SectionDonut({ data }: { data: SectionSplit[] }) {
         </ResponsiveContainer>
         <div className={styles.donutCenter}>
           <span className={styles.donutValue}>{duration(total)}</span>
-          <span className={styles.donutCaption}>au total</span>
+          <span className={styles.donutCaption}>{t('stats.chart.total')}</span>
         </div>
       </div>
       <ChartLegend

@@ -12,6 +12,7 @@ import { AddToPlaylistModal } from '@/features/playlists/AddToPlaylistModal';
 import { EditTrackModal } from '@/features/metadata/EditTrackModal';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { useSelection } from '@/features/selection/selectionStore';
+import { useT } from '@/i18n';
 import type { Track } from '@/types/api';
 
 const itemStyle = {
@@ -31,6 +32,7 @@ const itemStyle = {
 };
 
 export function TrackContextMenu({ track }: { track: Track }) {
+  const t = useT();
   const [menu, setMenu] = useState(false);
   const [addPl, setAddPl] = useState(false);
   const [edit, setEdit] = useState(false);
@@ -42,7 +44,7 @@ export function TrackContextMenu({ track }: { track: Track }) {
     <>
       <button
         type="button"
-        aria-label="Options du titre"
+        aria-label={t('track.menuAria')}
         onClick={(e) => {
           e.stopPropagation();
           setMenu(true);
@@ -67,10 +69,10 @@ export function TrackContextMenu({ track }: { track: Track }) {
             onClick={() => {
               setMenu(false);
               addToQueue(track);
-              toast("Ajouté à la file d'attente");
+              toast(t('player.addedToQueue'));
             }}
           >
-            <ListPlus size={18} /> Ajouter à la file d'attente
+            <ListPlus size={18} /> {t('player.addToQueue')}
           </button>
           <button
             type="button"
@@ -80,7 +82,7 @@ export function TrackContextMenu({ track }: { track: Track }) {
               setAddPl(true);
             }}
           >
-            <Plus size={18} /> Ajouter à une playlist
+            <Plus size={18} /> {t('track.addToPlaylist')}
           </button>
           <button
             type="button"
@@ -90,7 +92,7 @@ export function TrackContextMenu({ track }: { track: Track }) {
               setEdit(true);
             }}
           >
-            <Pencil size={18} /> Modifier les infos
+            <Pencil size={18} /> {t('track.editInfo')}
           </button>
           <button
             type="button"
@@ -100,7 +102,7 @@ export function TrackContextMenu({ track }: { track: Track }) {
               enterSelection(track.id);
             }}
           >
-            <CheckSquare size={18} /> Sélectionner des titres
+            <CheckSquare size={18} /> {t('track.selectTracks')}
           </button>
         </Modal>
       )}

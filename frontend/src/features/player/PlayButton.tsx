@@ -1,15 +1,17 @@
 import { Pause, Play } from 'lucide-react';
+import { useT } from '@/i18n';
 import styles from './PlayButton.module.css';
 
 export function PlayButton({
   onClick,
-  label = 'Lecture',
+  label,
   playing = false,
 }: {
   onClick: () => void;
   label?: string;
   playing?: boolean;
 }) {
+  const t = useT();
   return (
     <button type="button" className={styles.play} onClick={onClick}>
       {playing ? (
@@ -17,7 +19,7 @@ export function PlayButton({
       ) : (
         <Play size={19} fill="currentColor" />
       )}
-      <span>{label}</span>
+      <span>{label ?? t('player.play')}</span>
     </button>
   );
 }

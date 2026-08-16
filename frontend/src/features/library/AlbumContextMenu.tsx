@@ -3,12 +3,14 @@ import type { MouseEvent } from 'react';
 import { CheckSquare, Disc3, ListMusic, MoreHorizontal } from 'lucide-react';
 import { Modal } from '@/components/primitives/Modal';
 import { useSelection } from '@/features/selection/selectionStore';
+import { useT } from '@/i18n';
 import type { Album } from '@/types/api';
 import { useAlbumType } from './useAlbumType';
 import styles from './library.module.css';
 
 /** Actions d'une vignette album, sans avoir à ouvrir la page. */
 export function AlbumContextMenu({ album }: { album: Album }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const enterSelection = useSelection((s) => s.enter);
   const setType = useAlbumType();
@@ -27,7 +29,7 @@ export function AlbumContextMenu({ album }: { album: Album }) {
     <>
       <button
         type="button"
-        aria-label={`Options de ${album.title}`}
+        aria-label={t('album.menuAria', { title: album.title })}
         className={styles.cardMenu}
         onClick={(e) => {
           stop(e);
@@ -56,11 +58,11 @@ export function AlbumContextMenu({ album }: { album: Album }) {
             >
               {album.isCompilation ? (
                 <>
-                  <Disc3 size={18} /> C’est un album
+                  <Disc3 size={18} /> {t('album.menuIsAlbum')}
                 </>
               ) : (
                 <>
-                  <ListMusic size={18} /> C’est une playlist
+                  <ListMusic size={18} /> {t('album.menuIsPlaylist')}
                 </>
               )}
             </button>
@@ -72,7 +74,7 @@ export function AlbumContextMenu({ album }: { album: Album }) {
                 enterSelection(album.id, 'album');
               }}
             >
-              <CheckSquare size={18} /> Sélectionner
+              <CheckSquare size={18} /> {t('album.menuSelect')}
             </button>
           </Modal>
         </span>

@@ -7,6 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useT } from '@/i18n';
 import type { MonthlyStat } from '@/types/api';
 import { axisProps, ChartLegend, ChartTooltip, gridProps } from './chartTheme';
 import { int, monthLabel } from './statsFormat';
@@ -17,6 +18,7 @@ import { int, monthLabel } from './statsFormat';
  * même nature, l'empilement rendrait la seconde illisible.
  */
 export function DiscoveryChart({ data }: { data: MonthlyStat[] }) {
+  const t = useT();
   const chartData = data.map((d) => ({
     month: d.month,
     label: monthLabel(d.month),
@@ -50,12 +52,12 @@ export function DiscoveryChart({ data }: { data: MonthlyStat[] }) {
                     p
                       ? [
                           {
-                            name: 'Nouveaux titres',
+                            name: t('stats.chart.newTracks'),
                             value: int(p.titres),
                             color: 'var(--chart-1)',
                           },
                           {
-                            name: 'Nouveaux artistes',
+                            name: t('stats.chart.newArtists'),
                             value: int(p.artistes),
                             color: 'var(--chart-2)',
                           },
@@ -82,8 +84,8 @@ export function DiscoveryChart({ data }: { data: MonthlyStat[] }) {
       </ResponsiveContainer>
       <ChartLegend
         items={[
-          { label: 'Nouveaux titres', color: 'var(--chart-1)' },
-          { label: 'Nouveaux artistes', color: 'var(--chart-2)' },
+          { label: t('stats.chart.newTracks'), color: 'var(--chart-1)' },
+          { label: t('stats.chart.newArtists'), color: 'var(--chart-2)' },
         ]}
       />
     </div>

@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import { CoverArt } from '@/components/media/CoverArt';
 import { EntityLikeButton } from '@/features/likes/EntityLikeButton';
 import { useSelection } from '@/features/selection/selectionStore';
+import { useT } from '@/i18n';
 import type { Album } from '@/types/api';
 import { AlbumContextMenu } from './AlbumContextMenu';
 import styles from './library.module.css';
 
 export function AlbumCard({ album }: { album: Album }) {
+  const t = useT();
   const selActive = useSelection((s) => s.active && s.kind === 'album');
   const selected = useSelection((s) => s.ids.has(album.id));
   const toggleSel = useSelection((s) => s.toggle);
@@ -53,7 +55,9 @@ export function AlbumCard({ album }: { album: Album }) {
         <div className={styles.cardTitle}>{album.title}</div>
         <div className={styles.cardSub}>
           {album.isCompilation
-            ? `Artistes variés · ${album.trackCount} titres`
+            ? `${t('common.variousArtists')} · ${t('count.tracks', {
+                count: album.trackCount,
+              })}`
             : `${album.artist?.name ?? '—'}${album.year ? ` · ${album.year}` : ''}`}
         </div>
       </div>

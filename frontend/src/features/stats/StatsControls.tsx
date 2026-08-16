@@ -1,11 +1,12 @@
+import { useT, type TKey } from '@/i18n';
 import type { StatsPeriod } from '@/types/api';
 import styles from './stats.module.css';
 
-export const PERIODS: { key: StatsPeriod; label: string; days: number }[] = [
-  { key: 'week', label: '7 jours', days: 7 },
-  { key: 'month', label: '30 jours', days: 30 },
-  { key: 'year', label: '1 an', days: 365 },
-  { key: 'all', label: 'Tout', days: 365 },
+export const PERIODS: { key: StatsPeriod; label: TKey; days: number }[] = [
+  { key: 'week', label: 'stats.period.week', days: 7 },
+  { key: 'month', label: 'stats.period.month', days: 30 },
+  { key: 'year', label: 'stats.period.year', days: 365 },
+  { key: 'all', label: 'stats.period.all', days: 365 },
 ];
 
 export function PeriodSelector({
@@ -15,8 +16,13 @@ export function PeriodSelector({
   value: StatsPeriod;
   onChange: (p: StatsPeriod) => void;
 }) {
+  const t = useT();
   return (
-    <div className={styles.segmented} role="group" aria-label="Période">
+    <div
+      className={styles.segmented}
+      role="group"
+      aria-label={t('stats.periodAria')}
+    >
       {PERIODS.map((p) => (
         <button
           key={p.key}
@@ -25,7 +31,7 @@ export function PeriodSelector({
           aria-pressed={value === p.key}
           onClick={() => onChange(p.key)}
         >
-          {p.label}
+          {t(p.label)}
         </button>
       ))}
     </div>

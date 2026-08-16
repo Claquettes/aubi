@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { albumsApi } from '@/api/albums';
 import { Grid } from '@/components/layout/Grid';
 import { EmptyState } from '@/components/layout/EmptyState';
+import { useT } from '@/i18n';
 import { AlbumCard } from './AlbumCard';
 import { GridSkeleton } from './GridSkeleton';
 
@@ -18,6 +19,7 @@ export function AlbumsGrid({
   order?: 'asc' | 'desc';
   isLiked?: boolean;
 }) {
+  const t = useT();
   const { data, isLoading } = useQuery({
     queryKey: ['albums', { artistId, search, sort, order, isLiked }],
     queryFn: () =>
@@ -30,10 +32,10 @@ export function AlbumsGrid({
     return (
       <EmptyState>
         {isLiked
-          ? 'Aucun album en favori.'
+          ? t('grid.noLikedAlbum')
           : search
-            ? `Aucun album pour « ${search} ».`
-            : 'Aucun album. Lance un scan de ta bibliothèque dans Paramètres.'}
+            ? t('grid.noAlbumFor', { query: search })
+            : t('grid.noAlbum')}
       </EmptyState>
     );
 

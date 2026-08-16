@@ -6,10 +6,12 @@ import { CoverArt } from '@/components/media/CoverArt';
 import { Modal } from '@/components/primitives/Modal';
 import { Spinner } from '@/components/primitives/Spinner';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useT } from '@/i18n';
 import styles from './ArtistesDiversModal.module.css';
 
 /** Liste recherchable des artistes n'ayant qu'un seul titre. */
 export function ArtistesDiversModal({ onClose }: { onClose: () => void }) {
+  const t = useT();
   const [q, setQ] = useState('');
   const dq = useDebounce(q.trim(), 250);
   const { data, isFetching } = useQuery({
@@ -26,10 +28,10 @@ export function ArtistesDiversModal({ onClose }: { onClose: () => void }) {
   const artists = data?.data ?? [];
 
   return (
-    <Modal title="Artistes divers" onClose={onClose}>
+    <Modal title={t('grid.variousArtists')} onClose={onClose}>
       <input
         className={styles.search}
-        placeholder="Rechercher un artiste…"
+        placeholder={t('grid.variousArtistsSearch')}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         autoFocus
@@ -51,7 +53,7 @@ export function ArtistesDiversModal({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       ) : (
-        <p className={styles.empty}>Aucun artiste.</p>
+        <p className={styles.empty}>{t('grid.variousArtistsEmpty')}</p>
       )}
     </Modal>
   );

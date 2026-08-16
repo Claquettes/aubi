@@ -7,9 +7,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useT } from '@/i18n';
 import type { ListeningPatterns } from '@/types/api';
 import { axisProps, ChartTooltip, gridProps } from './chartTheme';
-import { duration, int, WEEKDAYS } from './statsFormat';
+import { duration, int, weekdays } from './statsFormat';
 
 /** Écoute par jour de la semaine (lundi → dimanche). */
 export function WeekdayChart({
@@ -17,8 +18,10 @@ export function WeekdayChart({
 }: {
   data: ListeningPatterns['byWeekday'];
 }) {
+  const t = useT();
+  const names = weekdays();
   const chartData = data.map((d) => ({
-    label: WEEKDAYS[d.weekday - 1] ?? String(d.weekday),
+    label: names[d.weekday - 1] ?? String(d.weekday),
     minutes: Math.round(d.totalMs / 60000),
     ms: d.totalMs,
     plays: d.playCount,
@@ -48,11 +51,11 @@ export function WeekdayChart({
                   p
                     ? [
                         {
-                          name: 'Écoute',
+                          name: t('stats.chart.listening'),
                           value: duration(p.ms),
                           color: 'var(--chart-1)',
                         },
-                        { name: 'Lectures', value: int(p.plays) },
+                        { name: t('stats.chart.plays'), value: int(p.plays) },
                       ]
                     : []
                 }

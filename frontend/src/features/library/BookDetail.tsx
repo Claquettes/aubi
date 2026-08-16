@@ -6,6 +6,7 @@ import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
+import { useT } from '@/i18n';
 import type { AudiobookChapter, AudiobookDetail, Track } from '@/types/api';
 import { DetailHero } from './DetailHero';
 import { TrackRow } from './TrackRow';
@@ -29,6 +30,7 @@ function chapterToTrack(book: AudiobookDetail, ch: AudiobookChapter): Track {
 }
 
 export function BookDetail({ id, kicker }: { id: string; kicker: string }) {
+  const t = useT();
   const { data: book, isLoading } = useQuery({
     queryKey: ['audiobook', id],
     queryFn: () => audiobooksApi.get(id),
@@ -40,7 +42,7 @@ export function BookDetail({ id, kicker }: { id: string; kicker: string }) {
   const setSource = usePlayerStore((s) => s.setSource);
 
   if (isLoading) return <Spinner />;
-  if (!book) return <EmptyState>Livre introuvable.</EmptyState>;
+  if (!book) return <EmptyState>{t('book.notFound')}</EmptyState>;
 
   const chapters = book.chapters ?? [];
   const tracks = chapters.map((ch) => chapterToTrack(book, ch));
@@ -60,16 +62,17 @@ export function BookDetail({ id, kicker }: { id: string; kicker: string }) {
         title={book.title}
         subtitle={
           <>
-            {book.author ?? '—'} · {book.chapterCount} chapitres
+            {book.author ?? '—'} ·{' '}
+            {t('count.chapters', { count: book.chapterCount })}
           </>
         }
-        actions={<PlayButton onClick={() => play(0)} label="Écouter" />}
+        actions={<PlayButton onClick={() => play(0)} label={t('book.listen')} />}
       />
       <div>
-        {tracks.map((t, i) => (
+        {tracks.map((track, i) => (
           <TrackRow
-            key={t.id}
-            track={t}
+            key={track.id}
+            track={track}
             index={i}
             queue={tracks}
             source={`audiobook:${book.id}`}

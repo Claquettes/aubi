@@ -1,10 +1,12 @@
 import { CoverArt } from '@/components/media/CoverArt';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
+import { useT } from '@/i18n';
 import type { TopTrack } from '@/types/api';
-import { duration, int, plural } from './statsFormat';
+import { duration } from './statsFormat';
 import styles from './stats.module.css';
 
 export function TopTracksList({ items }: { items: TopTrack[] }) {
+  const t = useT();
   const playTrack = usePlayerStore((s) => s.playTrack);
   const setSource = usePlayerStore((s) => s.setSource);
   const queue = items.map((it) => it.track);
@@ -46,7 +48,7 @@ export function TopTracksList({ items }: { items: TopTrack[] }) {
               </div>
             </div>
             <span className={styles.rankValue}>
-              {int(it.playCount)} écoute{plural(it.playCount)}
+              {t('count.listens', { count: it.playCount })}
             </span>
           </button>
         </li>

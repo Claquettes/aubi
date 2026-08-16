@@ -3,11 +3,15 @@ import { scannerApi } from '@/api/scanner';
 import { useToast } from '@/components/feedback/Toast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/primitives/Button';
+import { LANGS, localeTag, useLang, useSetLang, useT } from '@/i18n';
 import styles from './SettingsPage.module.css';
 
 export function SettingsPage() {
   const qc = useQueryClient();
   const toast = useToast();
+  const t = useT();
+  const lang = useLang();
+  const setLang = useSetLang();
   const { data: status } = useQuery({
     queryKey: ['scanner'],
     queryFn: () => scannerApi.status(),
@@ -19,7 +23,7 @@ export function SettingsPage() {
   const onScan = async () => {
     try {
       await scannerApi.scan();
-      toast('Scan de la bibliothèque lancé');
+      toast(t('settings.scanStarted'));
     } finally {
       qc.invalidateQueries({ queryKey: ['scanner'] });
     }
@@ -27,14 +31,34 @@ export function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Paramètres" />
+      <PageHeader title={t('settings.title')} />
 
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>Bibliothèque audio</h2>
+        <h2 className={styles.cardTitle}>{t('settings.languageCard')}</h2>
+        <div className={styles.langRow} role="group" aria-label={t('settings.languageCard')}>
+          {LANGS.map((l) => (
+            <button
+              key={l.key}
+              type="button"
+              className={l.key === lang ? styles.langOn : styles.lang}
+              aria-pressed={l.key === lang}
+              onClick={() => setLang(l.key)}
+            >
+              {t(l.labelKey)}
+            </button>
+          ))}
+        </div>
+        <p className={styles.info}>{t('settings.languageHint')}</p>
+      </section>
+
+      <section className={styles.card}>
+        <h2 className={styles.cardTitle}>{t('settings.libraryCard')}</h2>
         <p className={styles.info}>
-          {status?.tracksFound ?? 0} titres indexés
+          {t('settings.indexed', { count: status?.tracksFound ?? 0 })}
           {status?.lastScanAt
-            ? ` · dernier scan le ${new Date(status.lastScanAt).toLocaleString('fr-FR')}`
+            ? t('settings.lastScan', {
+                date: new Date(status.lastScanAt).toLocaleString(localeTag()),
+              })
             : ''}
         </p>
         {scanning && (
@@ -49,19 +73,18 @@ export function SettingsPage() {
           </div>
         )}
         {status?.status === 'error' && status.errorMessage && (
-          <p className={styles.error}>Erreur : {status.errorMessage}</p>
+          <p className={styles.error}>
+            {t('settings.error', { message: status.errorMessage })}
+          </p>
         )}
         <Button variant="primary" onClick={onScan} disabled={scanning}>
-          {scanning ? 'Scan en cours…' : 'Scanner la bibliothèque'}
+          {scanning ? t('settings.scanning') : t('settings.scan')}
         </Button>
       </section>
 
       <section className={styles.card}>
-        <h2 className={styles.cardTitle}>À propos</h2>
-        <p className={styles.info}>
-          aubi — streaming audio personnel auto-hébergé. L'accès est protégé par
-          Authelia ; cette interface se concentre sur l'écoute.
-        </p>
+        <h2 className={styles.cardTitle}>{t('settings.aboutCard')}</h2>
+        <p className={styles.info}>{t('settings.about')}</p>
       </section>
     </div>
   );

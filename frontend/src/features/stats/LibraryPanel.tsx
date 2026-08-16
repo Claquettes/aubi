@@ -1,4 +1,5 @@
 import { EmptyState } from '@/components/layout/EmptyState';
+import { useT, type TFn, type TKey } from '@/i18n';
 import type { LibraryStats } from '@/types/api';
 import { DecadeChart } from './DecadeChart';
 import { ProportionBar } from './ProportionBar';
@@ -8,8 +9,20 @@ import { Block } from './StatsControls';
 import { bytes, duration, int, percent, sectionLabel } from './statsFormat';
 import styles from './stats.module.css';
 
+/**
+ * Deux libellés arrivent en dur du serveur (SQL) : on les retraduit ici
+ * plutôt que de changer le contrat de l'API.
+ */
+const SERVER_LABELS: Record<string, TKey> = {
+  'Sans perte': 'stats.lib.lossless',
+  'Sans genre': 'stats.lib.noGenre',
+};
+const serverLabel = (v: string, t: TFn) =>
+  SERVER_LABELS[v] ? t(SERVER_LABELS[v]) : v;
+
 /** Ce que contient le catalogue — indépendant de ce qui a été écouté. */
 export function LibraryPanel({ data }: { data: LibraryStats }) {
+  const t = useT();
   const totalTracks = data.bySection.reduce((a, b) => a + b.trackCount, 0);
   const totalBytes = data.bySection.reduce((a, b) => a + b.sizeBytes, 0);
   const totalMs = data.bySection.reduce((a, b) => a + b.totalMs, 0);
@@ -22,44 +35,53 @@ export function LibraryPanel({ data }: { data: LibraryStats }) {
       <StatTiles
         columns={4}
         tiles={[
-          { label: 'Titres', value: int(totalTracks) },
+          { label: t('stats.lib.tracks'), value: int(totalTracks) },
           {
-            label: 'Durée totale',
+            label: t('stats.lib.totalDuration'),
             value: duration(totalMs),
-            hint: `${int(Math.round(totalMs / 86_400_000))} jours de lecture continue`,
+            hint: t('stats.lib.totalDurationHint', {
+              count: int(Math.round(totalMs / 86_400_000)),
+            }),
           },
-          { label: 'Sur le disque', value: bytes(totalBytes) },
+          { label: t('stats.lib.onDisk'), value: bytes(totalBytes) },
           {
-            label: 'Sans perte',
+            label: t('stats.lib.lossless'),
             value: percent(totalTracks ? lossless / totalTracks : 0),
-            hint: `${int(lossless)} titres FLAC / WAV`,
+            hint: t('stats.lib.losslessHint', { count: int(lossless) }),
           },
           {
-            label: 'Durée médiane',
+            label: t('stats.lib.medianDuration'),
             value: duration(data.durations.medianMs),
-            hint: `moyenne ${duration(data.durations.avgMs)}`,
+            hint: t('stats.lib.medianDurationHint', {
+              duration: duration(data.durations.avgMs),
+            }),
           },
           {
-            label: 'Plus long titre',
+            label: t('stats.lib.longestTrack'),
             value: duration(data.durations.maxMs),
           },
           {
-            label: 'Jamais écoutés',
+            label: t('stats.lib.neverPlayed'),
             value: int(data.neverPlayedTracks),
-            hint: `${percent(
-              totalTracks ? data.neverPlayedTracks / totalTracks : 0,
-            )} du catalogue`,
+            hint: t('stats.lib.neverPlayedHint', {
+              percent: percent(
+                totalTracks ? data.neverPlayedTracks / totalTracks : 0,
+              ),
+            }),
           },
           {
-            label: 'Albums intacts',
+            label: t('stats.lib.untouchedAlbums'),
             value: int(data.neverPlayedAlbums),
-            hint: 'aucun titre encore lancé',
+            hint: t('stats.lib.untouchedAlbumsHint'),
           },
         ]}
       />
 
       <div className={styles.twoCol}>
-        <Block title="Formats" caption="Répartition des fichiers du catalogue.">
+        <Block
+          title={t('stats.lib.formats')}
+          caption={t('stats.lib.formatsCaption')}
+        >
           <ProportionBar
             slices={data.byFormat.map((f) => ({
               label: f.format,
@@ -70,11 +92,14 @@ export function LibraryPanel({ data }: { data: LibraryStats }) {
             }))}
           />
         </Block>
-        <Block title="Débit" caption="Paliers ordonnés, du plus compressé au sans perte.">
+        <Block
+          title={t('stats.lib.bitrate')}
+          caption={t('stats.lib.bitrateCaption')}
+        >
           <ProportionBar
             ordinal
             slices={data.byQuality.map((q) => ({
-              label: q.bucket,
+              label: serverLabel(q.bucket, t),
               value: q.trackCount,
             }))}
           />
@@ -82,52 +107,62 @@ export function LibraryPanel({ data }: { data: LibraryStats }) {
       </div>
 
       {data.bySection.length > 1 && (
-        <Block title="Par catégorie">
+        <Block title={t('stats.block.bySection')}>
           <ProportionBar
             slices={data.bySection.map((s) => ({
               label: sectionLabel(s.section),
               value: s.trackCount,
-              hint: `${int(s.trackCount)} titres · ${duration(s.totalMs)}`,
+              hint: `${t('stats.lib.tracksValue', {
+                count: int(s.trackCount),
+              })} · ${duration(s.totalMs)}`,
             }))}
           />
         </Block>
       )}
 
-      <Block title="Par décennie" caption="Année de sortie des albums.">
+      <Block
+        title={t('stats.lib.decades')}
+        caption={t('stats.lib.decadesCaption')}
+      >
         {data.byDecade.length ? (
           <DecadeChart data={data.byDecade} />
         ) : (
-          <EmptyState>
-            Aucun album n'a d'année renseignée — les balises sont vides.
-          </EmptyState>
+          <EmptyState>{t('stats.lib.decadesEmpty')}</EmptyState>
         )}
       </Block>
 
-      <Block title="Genres">
+      <Block title={t('stats.lib.genres')}>
         {data.byGenre.length ? (
           <RankedBars
             showCover={false}
             items={data.byGenre.map((g) => ({
               id: g.genre,
-              label: g.genre,
+              label: serverLabel(g.genre, t),
               sub: duration(g.totalMs),
               value: g.trackCount,
-              valueLabel: `${int(g.trackCount)} titres`,
+              valueLabel: t('stats.lib.tracksValue', {
+                count: int(g.trackCount),
+              }),
             }))}
           />
         ) : (
-          <EmptyState>Aucun genre renseigné dans les balises.</EmptyState>
+          <EmptyState>{t('stats.lib.genresEmpty')}</EmptyState>
         )}
       </Block>
 
-      <Block title="Artistes les mieux fournis" caption="Par nombre de titres possédés.">
+      <Block
+        title={t('stats.lib.topArtistsByTracks')}
+        caption={t('stats.lib.topArtistsByTracksCaption')}
+      >
         <RankedBars
           items={data.topArtistsByTracks.map((a) => ({
             id: a.artist.id,
             label: a.artist.name,
-            sub: `${int(a.albumCount)} album${a.albumCount > 1 ? 's' : ''}`,
+            sub: t('count.albums', { count: a.albumCount }),
             value: a.trackCount,
-            valueLabel: `${int(a.trackCount)} titres`,
+            valueLabel: t('stats.lib.tracksValue', {
+              count: int(a.trackCount),
+            }),
             coverUrl: a.artist.coverUrl,
             to: `/music/artists/${a.artist.id}`,
           }))}

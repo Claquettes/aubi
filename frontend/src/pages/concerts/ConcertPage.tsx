@@ -10,9 +10,11 @@ import { PlayButton } from '@/features/player/PlayButton';
 import { usePlayerStore } from '@/features/player/usePlayerStore';
 import { usePageTheme } from '@/hooks/appTheme';
 import { useCoverColor } from '@/hooks/useCoverColor';
+import { localeTag, useT } from '@/i18n';
 import styles from './ConcertPage.module.css';
 
 export function ConcertPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { data: concert, isLoading } = useQuery({
     queryKey: ['concert', id],
@@ -25,7 +27,7 @@ export function ConcertPage() {
   const setSource = usePlayerStore((s) => s.setSource);
 
   if (isLoading) return <Spinner />;
-  if (!concert) return <EmptyState>Concert introuvable.</EmptyState>;
+  if (!concert) return <EmptyState>{t('concert.notFound')}</EmptyState>;
 
   const tracks = concert.tracks ?? [];
   const playAll = () => {
@@ -34,7 +36,7 @@ export function ConcertPage() {
     playTrack(tracks[0], tracks, 0);
   };
   const date = concert.concertDate
-    ? new Date(concert.concertDate).toLocaleDateString('fr-FR')
+    ? new Date(concert.concertDate).toLocaleDateString(localeTag())
     : null;
 
   return (
@@ -44,12 +46,14 @@ export function ConcertPage() {
         accent={accent}
         coverUrl={concert.coverUrl}
         label={concert.title}
-        kicker="Concert"
+        kicker={t('common.concert')}
         title={concert.title}
         subtitle={
           <>
             {[concert.venue, date].filter(Boolean).join(' · ')}
-            {concert.trackCount ? ` · ${concert.trackCount} titres · ` : ' · '}
+            {concert.trackCount
+              ? ` · ${t('count.tracks', { count: concert.trackCount })} · `
+              : ' · '}
             <DurationText ms={concert.durationMs} />
           </>
         }
@@ -57,10 +61,10 @@ export function ConcertPage() {
       />
       {concert.notes && <p className={styles.notes}>{concert.notes}</p>}
       <div>
-        {tracks.map((t, i) => (
+        {tracks.map((track, i) => (
           <TrackRow
-            key={t.id}
-            track={t}
+            key={track.id}
+            track={track}
             index={i}
             queue={tracks}
             source={`concert:${concert.id}`}

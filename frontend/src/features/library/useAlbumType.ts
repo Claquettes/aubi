@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { albumsApi } from '@/api/albums';
 import { useToast } from '@/components/feedback/Toast';
+import { useT } from '@/i18n';
 
 /**
  * Album ↔ playlist. Le scanner range en « collection » tout dossier à ≥ 8
@@ -10,6 +11,7 @@ import { useToast } from '@/components/feedback/Toast';
 export function useAlbumType() {
   const queryClient = useQueryClient();
   const toast = useToast();
+  const t = useT();
 
   return useMutation({
     mutationFn: ({
@@ -31,13 +33,13 @@ export function useAlbumType() {
       toast(
         isCompilation
           ? n > 1
-            ? `${n} albums déplacés dans les playlists`
-            : 'Déplacé dans les playlists'
+            ? t('select.movedToPlaylists', { count: n })
+            : t('select.movedToPlaylistsOne')
           : n > 1
-            ? `${n} playlists remises dans les albums`
-            : 'Remis dans les albums',
+            ? t('select.movedToAlbums', { count: n })
+            : t('select.movedToAlbumsOne'),
       );
     },
-    onError: () => toast('Impossible de reclasser — réessaie'),
+    onError: () => toast(t('select.moveError')),
   });
 }

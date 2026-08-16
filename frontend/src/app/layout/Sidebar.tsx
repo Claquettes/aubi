@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useT, type TFn, type TKey } from '@/i18n';
 import styles from './Sidebar.module.css';
 
 interface Item {
@@ -20,28 +21,31 @@ interface Item {
 }
 
 /** Rubriques : la barre se lit comme un sommaire, pas comme une liste plate. */
-const SECTIONS: { title: string; items: Item[] }[] = [
+const SECTIONS: {
+  title: TKey;
+  items: { to: string; label: TKey; icon: LucideIcon }[];
+}[] = [
   {
-    title: 'Bibliothèque',
+    title: 'nav.section.library',
     items: [
       // Pas de `end` : la rubrique reste allumée sur /music/albums/… et /music/artists/…
-      { to: '/music', label: 'Musique', icon: Music2 },
-      { to: '/concerts', label: 'Concerts', icon: Mic2 },
-      { to: '/audiobooks', label: 'Livres audio', icon: BookOpen },
+      { to: '/music', label: 'nav.music', icon: Music2 },
+      { to: '/concerts', label: 'nav.concerts', icon: Mic2 },
+      { to: '/audiobooks', label: 'nav.audiobooks', icon: BookOpen },
     ],
   },
   {
-    title: 'Ma sélection',
+    title: 'nav.section.mine',
     items: [
-      { to: '/playlists', label: 'Playlists', icon: ListMusic },
-      { to: '/likes', label: 'Favoris', icon: Heart },
+      { to: '/playlists', label: 'nav.playlists', icon: ListMusic },
+      { to: '/likes', label: 'nav.likes', icon: Heart },
     ],
   },
   {
-    title: 'Explorer',
+    title: 'nav.section.explore',
     items: [
-      { to: '/stats', label: 'Statistiques', icon: BarChart2 },
-      { to: '/graph', label: 'Graphe', icon: Waypoints },
+      { to: '/stats', label: 'nav.stats', icon: BarChart2 },
+      { to: '/graph', label: 'nav.graph', icon: Waypoints },
     ],
   },
 ];
@@ -61,11 +65,13 @@ function Link({ to, label, icon: Icon }: Item) {
 }
 
 export function Sidebar() {
+  const t: TFn = useT();
+
   return (
     <aside className={styles.aside}>
       <NavLink to="/music" end className={styles.brand}>
         <span className={styles.wordmark}>aubi</span>
-        <span className={styles.tagline}>bibliothèque personnelle</span>
+        <span className={styles.tagline}>{t('nav.tagline')}</span>
       </NavLink>
 
       <NavLink
@@ -75,22 +81,27 @@ export function Sidebar() {
         }
       >
         <Search size={16} strokeWidth={1.75} aria-hidden="true" />
-        <span>Rechercher…</span>
+        <span>{t('nav.searchLink')}</span>
       </NavLink>
 
-      <nav className={styles.nav} aria-label="Navigation principale">
+      <nav className={styles.nav} aria-label={t('nav.aria')}>
         {SECTIONS.map((section) => (
           <div key={section.title} className={styles.section}>
-            <p className={styles.eyebrow}>{section.title}</p>
+            <p className={styles.eyebrow}>{t(section.title)}</p>
             {section.items.map((item) => (
-              <Link key={item.to} {...item} />
+              <Link
+                key={item.to}
+                to={item.to}
+                icon={item.icon}
+                label={t(item.label)}
+              />
             ))}
           </div>
         ))}
       </nav>
 
       <div className={styles.foot}>
-        <Link to="/settings" label="Paramètres" icon={Settings} />
+        <Link to="/settings" label={t('nav.settings')} icon={Settings} />
       </div>
     </aside>
   );

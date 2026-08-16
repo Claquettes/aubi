@@ -7,12 +7,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useT } from '@/i18n';
 import type { DailyStat } from '@/types/api';
 import { axisProps, ChartTooltip, gridProps } from './chartTheme';
 import { dayLabel, duration } from './statsFormat';
 
 /** Minutes écoutées par jour. Une seule série : pas de légende, le titre suffit. */
 export function ListeningChart({ data }: { data: DailyStat[] }) {
+  const t = useT();
   const chartData = data.map((d) => ({
     day: d.day,
     short: `${Number(d.day.slice(8))}/${Number(d.day.slice(5, 7))}`,
@@ -50,12 +52,12 @@ export function ListeningChart({ data }: { data: DailyStat[] }) {
                   p
                     ? [
                         {
-                          name: 'Écoute',
+                          name: t('stats.chart.listening'),
                           value: duration(p.ms),
                           color: 'var(--chart-1)',
                         },
                         {
-                          name: 'Titres joués',
+                          name: t('stats.chart.playedTracks'),
                           value: String(p.plays),
                         },
                       ]

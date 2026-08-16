@@ -4,6 +4,7 @@ import { ChevronDown, ListMusic } from 'lucide-react';
 import { AmbientBackground } from '@/components/media/AmbientBackground';
 import { CoverArt } from '@/components/media/CoverArt';
 import { LikeButton } from '@/features/likes/LikeButton';
+import { useT } from '@/i18n';
 import { PlayerControls } from './PlayerControls';
 import { PlayerProgress } from './PlayerProgress';
 import { QueueDrawer } from './QueueDrawer';
@@ -13,6 +14,7 @@ import { usePlayerStore } from './usePlayerStore';
 import styles from './player.module.css';
 
 export function FullPlayer() {
+  const t = useT();
   const open = usePlayerStore((s) => s.fullPlayerOpen);
   const setOpen = usePlayerStore((s) => s.setFullPlayerOpen);
   const setQueueOpen = usePlayerStore((s) => s.setQueueOpen);
@@ -28,7 +30,7 @@ export function FullPlayer() {
       <AmbientBackground variant="player" pulse={false} />
 
       <header className={styles.fullHead}>
-        <button type="button" onClick={() => setOpen(false)} aria-label="Réduire">
+        <button type="button" onClick={() => setOpen(false)} aria-label={t('player.collapse')}>
           <ChevronDown size={24} />
         </button>
         {track.album ? (
@@ -40,12 +42,12 @@ export function FullPlayer() {
             {track.album.title}
           </Link>
         ) : (
-          <span className={styles.fullSource}>Lecture en cours</span>
+          <span className={styles.fullSource}>{t('player.nowPlaying')}</span>
         )}
         <button
           type="button"
           onClick={() => setQueueOpen(true)}
-          aria-label="File d'attente"
+          aria-label={t('player.queue')}
         >
           <ListMusic size={22} />
         </button>

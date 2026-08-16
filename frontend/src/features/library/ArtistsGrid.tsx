@@ -4,6 +4,7 @@ import { Users } from 'lucide-react';
 import { artistsApi } from '@/api/artists';
 import { Grid } from '@/components/layout/Grid';
 import { EmptyState } from '@/components/layout/EmptyState';
+import { useT } from '@/i18n';
 import { ArtistCard } from './ArtistCard';
 import { ArtistesDiversModal } from './ArtistesDiversModal';
 import { GridSkeleton } from './GridSkeleton';
@@ -20,6 +21,7 @@ export function ArtistsGrid({
   order?: 'asc' | 'desc';
   isLiked?: boolean;
 }) {
+  const t = useT();
   const [diversOpen, setDiversOpen] = useState(false);
   // On ne regroupe les artistes à 1 titre que hors recherche / hors favoris
   // (sinon une recherche d'un artiste « divers » ne trouverait rien).
@@ -50,10 +52,10 @@ export function ArtistsGrid({
     return (
       <EmptyState>
         {isLiked
-          ? 'Aucun artiste en favori.'
+          ? t('grid.noLikedArtist')
           : search
-            ? `Aucun artiste pour « ${search} ».`
-            : 'Aucun artiste pour le moment.'}
+            ? t('grid.noArtistFor', { query: search })
+            : t('grid.noArtist')}
       </EmptyState>
     );
 
@@ -75,9 +77,11 @@ export function ArtistsGrid({
               </div>
             </div>
             <div className={styles.cardBody}>
-              <div className={styles.cardTitle}>Artistes divers</div>
+              <div className={styles.cardTitle}>
+                {t('grid.variousArtists')}
+              </div>
               <div className={styles.cardSub}>
-                {diversCount} artiste{diversCount > 1 ? 's' : ''} · 1 titre
+                {t('grid.variousArtistsSub', { count: diversCount })}
               </div>
             </div>
           </button>
