@@ -1,5 +1,7 @@
 import { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { ChevronDown, ListMusic } from 'lucide-react';
+import { AmbientBackground } from '@/components/media/AmbientBackground';
 import { CoverArt } from '@/components/media/CoverArt';
 import { LikeButton } from '@/features/likes/LikeButton';
 import { PlayerControls } from './PlayerControls';
@@ -23,30 +25,23 @@ export function FullPlayer() {
 
   return (
     <div className={styles.full} ref={rootRef}>
-      <div className={styles.bg} aria-hidden="true">
-        <div className={`${styles.orb} ${styles.orbA}`}>
-          <i />
-        </div>
-        <div className={`${styles.orb} ${styles.orbB}`}>
-          <i />
-        </div>
-        <div className={`${styles.orb} ${styles.orbC}`}>
-          <i />
-        </div>
-        <div className={`${styles.orb} ${styles.orbD}`}>
-          <i />
-        </div>
-        <div className={styles.beatFlash} />
-        <div className={styles.vignette} />
-      </div>
+      <AmbientBackground variant="player" pulse={false} />
 
       <header className={styles.fullHead}>
         <button type="button" onClick={() => setOpen(false)} aria-label="Réduire">
           <ChevronDown size={24} />
         </button>
-        <span className={styles.fullSource}>
-          {track.album?.title ?? 'Lecture en cours'}
-        </span>
+        {track.album ? (
+          <Link
+            to={`/music/albums/${track.album.id}`}
+            className={styles.fullSource}
+            onClick={() => setOpen(false)}
+          >
+            {track.album.title}
+          </Link>
+        ) : (
+          <span className={styles.fullSource}>Lecture en cours</span>
+        )}
         <button
           type="button"
           onClick={() => setQueueOpen(true)}
@@ -64,7 +59,19 @@ export function FullPlayer() {
           <div className={styles.fullTitleRow}>
             <div style={{ minWidth: 0 }}>
               <h2 className={styles.fullTitle}>{track.title}</h2>
-              <p className={styles.fullArtist}>{track.artist?.name ?? '—'}</p>
+              <p className={styles.fullArtist}>
+                {track.artist ? (
+                  <Link
+                    to={`/music/artists/${track.artist.id}`}
+                    className={styles.fullArtistLink}
+                    onClick={() => setOpen(false)}
+                  >
+                    {track.artist.name}
+                  </Link>
+                ) : (
+                  '—'
+                )}
+              </p>
             </div>
             <LikeButton track={track} size={22} />
           </div>

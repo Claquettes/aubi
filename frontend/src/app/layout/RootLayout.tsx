@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { AmbientBackground } from '@/components/media/AmbientBackground';
 import { FullPlayer } from '@/features/player/FullPlayer';
 import { MiniPlayer } from '@/features/player/MiniPlayer';
 import { useAudioEngine } from '@/features/player/useAudioEngine';
@@ -17,6 +18,7 @@ export function RootLayout() {
   useAppTheme();
   return (
     <div className={styles.shell}>
+      <AmbientBackground />
       <Sidebar />
       <main className={styles.main}>
         <Outlet />

@@ -90,10 +90,12 @@ export function useAudioPulse(
         level: s ? normalize(ranges.level, s.level, dt) * gain : 0,
       };
 
-      bass = smooth(bass, target.bass, dt, 0.035, 0.17);
-      mid = smooth(mid, target.mid, dt, 0.07, 0.3);
-      treble = smooth(treble, target.treble, dt, 0.05, 0.25);
-      level = smooth(level, target.level, dt, 0.06, 0.35);
+      // Attaque franche, retour lent : le mouvement suit la musique sans
+      // jamais saccader.
+      bass = smooth(bass, target.bass, dt, 0.06, 0.34);
+      mid = smooth(mid, target.mid, dt, 0.11, 0.5);
+      treble = smooth(treble, target.treble, dt, 0.08, 0.42);
+      level = smooth(level, target.level, dt, 0.12, 0.6);
 
       // Beat = pic de grave nettement au-dessus de la moyenne glissante.
       bassAvg += (bass - bassAvg) * (1 - Math.exp(-dt / 1.1));
@@ -101,7 +103,7 @@ export function useAudioPulse(
         beat = 1;
         lastBeatAt = now;
       }
-      beat *= Math.exp(-dt / 0.17);
+      beat *= Math.exp(-dt / 0.26);
 
       el.style.setProperty('--audio-bass', bass.toFixed(3));
       el.style.setProperty('--audio-mid', mid.toFixed(3));

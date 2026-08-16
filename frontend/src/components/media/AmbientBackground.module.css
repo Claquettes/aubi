@@ -1,0 +1,282 @@
+/* ------------------------------------------------------------------ */
+/* Fond ambiant : nappes de couleur issues de la pochette, dérive lente, */
+/* déformation organique, respiration au rythme de la musique.          */
+/* Deux réglages : discret derrière l'app, franc dans le lecteur.        */
+/* ------------------------------------------------------------------ */
+.bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint style;
+  /* Sinusoïde douce : pas d'à-coup aux points de rebroussement. */
+  --ease-inout-soft: cubic-bezier(0.45, 0, 0.55, 1);
+}
+/* Derrière l'app : à peine perceptible, sous le contenu et sans masquer le
+   grain papier (donc pas de fond opaque, les nappes se composent en alpha). */
+.app {
+  z-index: -1;
+  --amb-alpha: 0.17;
+  --amb-react: 0.4;
+}
+/* Dans le lecteur : fond plein, les nappes se mélangent en « screen ». */
+.player {
+  z-index: 0;
+  background: var(--color-canvas);
+  --amb-alpha: 0.62;
+  --amb-react: 1;
+}
+
+.orb {
+  position: absolute;
+  width: 66vmax;
+  height: 66vmax;
+  will-change: transform;
+}
+/* Pas de will-change ici : l'animation CSS suffit à faire promouvoir la
+   couche, et trois couches forcées par nappe coûteraient cher en mémoire. */
+.morph {
+  width: 100%;
+  height: 100%;
+}
+.core {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--orb-color) 0%,
+    color-mix(in oklab, var(--orb-color) 42%, transparent) 48%,
+    transparent 74%
+  );
+  mix-blend-mode: screen;
+  opacity: calc(
+    var(--amb-alpha) * (0.78 + var(--audio-level, 0) * 0.5 * var(--amb-react))
+  );
+  /* Filtre passe-bas : lisse le pas à pas de l'analyse, et fait redescendre
+     la nappe en douceur quand la lecture s'arrête. */
+  transition:
+    transform 180ms linear,
+    opacity 300ms linear;
+  will-change: transform, opacity;
+}
+
+/* Chaque nappe : sa couleur, sa taille, sa trajectoire, sa bande de
+   fréquences. Les durées sont volontairement premières entre elles pour que
+   les mouvements ne se resynchronisent jamais. */
+.orbA {
+  top: -30vmax;
+  left: -24vmax;
+  --orb-color: var(--art-primary, var(--color-accent));
+  animation: driftA 67s var(--ease-inout-soft) infinite alternate;
+}
+.orbA .morph {
+  animation: morphA 41s var(--ease-inout-soft) infinite alternate;
+}
+.orbA .core {
+  transform: scale(calc(1 + var(--audio-bass, 0) * 0.16 * var(--amb-react)));
+}
+
+.orbB {
+  top: -22vmax;
+  right: -26vmax;
+  width: 72vmax;
+  height: 72vmax;
+  --orb-color: var(--art-secondary, var(--color-accent));
+  animation: driftB 83s var(--ease-inout-soft) infinite alternate;
+}
+.orbB .morph {
+  animation: morphB 53s var(--ease-inout-soft) infinite alternate;
+}
+.orbB .core {
+  transform: scale(calc(1 + var(--audio-mid, 0) * 0.14 * var(--amb-react)));
+}
+
+.orbC {
+  bottom: -34vmax;
+  left: 4vmax;
+  width: 78vmax;
+  height: 78vmax;
+  --orb-color: var(--art-tertiary, var(--art-primary, var(--color-accent)));
+  animation: driftC 71s var(--ease-inout-soft) infinite alternate;
+}
+.orbC .morph {
+  animation: morphC 47s var(--ease-inout-soft) infinite alternate;
+}
+.orbC .core {
+  transform: scale(calc(1 + var(--audio-bass, 0) * 0.13 * var(--amb-react)));
+}
+
+.orbD {
+  bottom: -28vmax;
+  right: -20vmax;
+  width: 56vmax;
+  height: 56vmax;
+  --orb-color: var(--art-4, var(--art-action, var(--color-accent)));
+  animation: driftD 59s var(--ease-inout-soft) infinite alternate;
+}
+.orbD .morph {
+  animation: morphA 37s var(--ease-inout-soft) infinite alternate;
+}
+.orbD .core {
+  transform: scale(calc(1 + var(--audio-treble, 0) * 0.18 * var(--amb-react)));
+}
+
+.orbE {
+  top: 12vmax;
+  left: 26vmax;
+  width: 50vmax;
+  height: 50vmax;
+  --orb-color: var(--art-5, var(--art-secondary, var(--color-accent)));
+  animation: driftE 89s var(--ease-inout-soft) infinite alternate;
+}
+.orbE .morph {
+  animation: morphB 43s var(--ease-inout-soft) infinite alternate;
+}
+.orbE .core {
+  transform: scale(calc(1 + var(--audio-mid, 0) * 0.17 * var(--amb-react)));
+}
+
+.orbF {
+  bottom: 6vmax;
+  right: 18vmax;
+  width: 46vmax;
+  height: 46vmax;
+  --orb-color: var(--art-6, var(--art-tertiary, var(--color-accent)));
+  animation: driftF 61s var(--ease-inout-soft) infinite alternate;
+}
+.orbF .morph {
+  animation: morphC 31s var(--ease-inout-soft) infinite alternate;
+}
+.orbF .core {
+  transform: scale(calc(1 + var(--audio-treble, 0) * 0.15 * var(--amb-react)));
+}
+
+/* Souffle très bref sur chaque frappe de grave. */
+.beatFlash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    62% 62% at 50% 48%,
+    color-mix(in oklab, var(--art-action, var(--color-accent)) 45%, transparent),
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+  opacity: calc(var(--audio-beat, 0) * 0.22 * var(--amb-react));
+}
+/* Assombrit les bords pour garder le texte du lecteur lisible. */
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    130% 95% at 50% 45%,
+    transparent 32%,
+    color-mix(in oklab, var(--color-canvas) 80%, transparent) 100%
+  );
+}
+
+/* Trajectoires : de longues boucles douces, jamais deux fois la même. */
+@keyframes driftA {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(22vmin, 16vmin, 0) rotate(28deg);
+  }
+}
+@keyframes driftB {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(-24vmin, 20vmin, 0) rotate(-24deg);
+  }
+}
+@keyframes driftC {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(26vmin, -18vmin, 0) rotate(22deg);
+  }
+}
+@keyframes driftD {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(-18vmin, -22vmin, 0) rotate(-30deg);
+  }
+}
+@keyframes driftE {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(-28vmin, 12vmin, 0) rotate(34deg);
+  }
+}
+@keyframes driftF {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(20vmin, -26vmin, 0) rotate(-18deg);
+  }
+}
+
+/* Déformation : la nappe s'étire et pivote, ce qui la fait fondre dans ses
+   voisines au lieu de rester un disque. */
+@keyframes morphA {
+  0% {
+    transform: scale(1, 1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.24, 0.82) rotate(18deg);
+  }
+  100% {
+    transform: scale(0.88, 1.18) rotate(-14deg);
+  }
+}
+@keyframes morphB {
+  0% {
+    transform: scale(1.1, 0.92) rotate(-8deg);
+  }
+  50% {
+    transform: scale(0.86, 1.22) rotate(14deg);
+  }
+  100% {
+    transform: scale(1.18, 0.9) rotate(26deg);
+  }
+}
+@keyframes morphC {
+  0% {
+    transform: scale(0.94, 1.12) rotate(6deg);
+  }
+  50% {
+    transform: scale(1.2, 0.88) rotate(-16deg);
+  }
+  100% {
+    transform: scale(0.9, 1.16) rotate(20deg);
+  }
+}
+
+/* Économie sur petit écran : deux nappes de moins. */
+@media (max-width: 640px) {
+  .orbE,
+  .orbF {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb,
+  .morph,
+  .core {
+    animation: none;
+    transform: none;
+  }
+  .beatFlash {
+    opacity: 0;
+  }
+}

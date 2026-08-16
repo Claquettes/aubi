@@ -1,5 +1,9 @@
 node_modules/
 dist/
+# Cache de pré-bundling Vite : atterrit à la racine du front quand node_modules
+# est un volume Docker. Que des chunk-*.js régénérables.
+.vite/
+*.tsbuildinfo
 .env
 *.log
 .DS_Store

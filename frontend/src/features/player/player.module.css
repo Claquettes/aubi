@@ -126,180 +126,6 @@
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Fond immersif : nappes de couleur issues de la pochette, en dérive  */
-/* permanente et pulsant sur le spectre du morceau en cours.           */
-/* ------------------------------------------------------------------ */
-.bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  background: var(--color-canvas);
-  pointer-events: none;
-}
-.orb {
-  position: absolute;
-  width: 78vmax;
-  height: 78vmax;
-  will-change: transform;
-}
-.orb > i {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(
-    closest-side,
-    var(--orb-color) 0%,
-    color-mix(in oklab, var(--orb-color) 45%, transparent) 45%,
-    transparent 72%
-  );
-  mix-blend-mode: screen;
-  will-change: transform, opacity;
-}
-.orbA {
-  top: -26vmax;
-  left: -20vmax;
-  --orb-color: color-mix(
-    in oklab,
-    var(--art-primary, var(--color-accent)) 82%,
-    black
-  );
-  animation: orbDriftA 19s var(--ease-standard) infinite alternate;
-}
-.orbA > i {
-  transform: scale(calc(0.88 + var(--audio-bass) * 0.34))
-    translate3d(calc(var(--audio-mid) * 3vmin), calc(var(--audio-bass) * -3vmin), 0);
-  opacity: calc(0.55 + var(--audio-level) * 0.45);
-}
-.orbB {
-  top: -18vmax;
-  right: -24vmax;
-  --orb-color: color-mix(
-    in oklab,
-    var(--art-secondary, var(--color-accent)) 78%,
-    black
-  );
-  animation: orbDriftB 26s var(--ease-standard) infinite alternate;
-}
-.orbB > i {
-  transform: scale(calc(0.9 + var(--audio-mid) * 0.3))
-    translate3d(calc(var(--audio-treble) * -4vmin), calc(var(--audio-mid) * 3vmin), 0);
-  opacity: calc(0.5 + var(--audio-level) * 0.5);
-}
-.orbC {
-  bottom: -34vmax;
-  left: 8vmax;
-  --orb-color: color-mix(
-    in oklab,
-    var(--art-tertiary, var(--art-primary, var(--color-accent))) 76%,
-    black
-  );
-  animation: orbDriftC 31s var(--ease-standard) infinite alternate;
-}
-.orbC > i {
-  transform: scale(calc(0.92 + var(--audio-bass) * 0.28))
-    translate3d(calc(var(--audio-mid) * -3vmin), calc(var(--audio-bass) * -4vmin), 0);
-  opacity: calc(0.52 + var(--audio-level) * 0.48);
-}
-.orbD {
-  bottom: -30vmax;
-  right: -18vmax;
-  width: 62vmax;
-  height: 62vmax;
-  --orb-color: color-mix(
-    in oklab,
-    var(--art-action, var(--color-accent)) 62%,
-    black
-  );
-  animation: orbDriftD 23s var(--ease-standard) infinite alternate;
-}
-.orbD > i {
-  transform: scale(calc(0.86 + var(--audio-treble) * 0.4))
-    translate3d(calc(var(--audio-treble) * 4vmin), calc(var(--audio-mid) * -3vmin), 0);
-  opacity: calc(0.42 + var(--audio-level) * 0.5);
-}
-
-/* Éclat bref à chaque frappe détectée dans les graves. */
-.beatFlash {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    58% 58% at 50% 46%,
-    color-mix(in oklab, var(--art-action, var(--color-accent)) 55%, transparent),
-    transparent 68%
-  );
-  mix-blend-mode: screen;
-  opacity: calc(var(--audio-beat) * 0.34);
-  transform: scale(calc(0.94 + var(--audio-beat) * 0.1));
-}
-/* Assombrit les bords pour garder le texte lisible. */
-.vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    130% 95% at 50% 45%,
-    transparent 30%,
-    color-mix(in oklab, var(--color-canvas) 78%, transparent) 100%
-  );
-}
-
-@keyframes orbDriftA {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(14vmin, 9vmin, 0) rotate(22deg);
-  }
-  100% {
-    transform: translate3d(5vmin, 17vmin, 0) rotate(-14deg);
-  }
-}
-@keyframes orbDriftB {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(-16vmin, 12vmin, 0) rotate(-20deg);
-  }
-  100% {
-    transform: translate3d(-4vmin, 22vmin, 0) rotate(16deg);
-  }
-}
-@keyframes orbDriftC {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(18vmin, -13vmin, 0) rotate(18deg);
-  }
-  100% {
-    transform: translate3d(-9vmin, -6vmin, 0) rotate(-12deg);
-  }
-}
-@keyframes orbDriftD {
-  0% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(-13vmin, -18vmin, 0) rotate(-24deg);
-  }
-  100% {
-    transform: translate3d(6vmin, -8vmin, 0) rotate(10deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .orb,
-  .beatFlash {
-    animation: none;
-  }
-  .orb > i,
-  .beatFlash {
-    transform: none;
-  }
-}
-
 .fullArt {
   position: relative;
 }
@@ -314,10 +140,19 @@
     color-mix(in oklab, var(--art-action, var(--color-accent)) 55%, transparent),
     transparent 70%
   );
-  opacity: calc(0.25 + var(--audio-bass) * 0.55);
-  transform: scale(calc(0.94 + var(--audio-bass) * 0.16));
+  opacity: calc(0.22 + var(--audio-bass) * 0.42);
+  transform: scale(calc(0.96 + var(--audio-bass) * 0.12));
+  transition:
+    transform 160ms linear,
+    opacity 260ms linear;
   pointer-events: none;
   z-index: -1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fullArt::before {
+    opacity: 0.25;
+    transform: none;
+  }
 }
 .fullArt > * {
   box-shadow: var(--shadow-paper-2);
@@ -341,6 +176,7 @@
 .fullHead button:hover {
   color: var(--color-text-primary);
 }
+/* Titre de l'album : lien vers sa page (le lecteur se referme au clic). */
 .fullSource {
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
@@ -349,6 +185,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+a.fullSource:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .fullStage {
   position: relative;
@@ -417,6 +261,17 @@
   font-size: var(--text-base);
   color: var(--color-text-secondary);
   margin-top: var(--space-1);
+}
+/* Nom de l'artiste : lien vers sa page (le lecteur se referme au clic). */
+.fullArtistLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+.fullArtistLink:hover {
+  color: var(--art-action, var(--color-accent));
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 @media (min-width: 1024px) {
   .fullTitle {

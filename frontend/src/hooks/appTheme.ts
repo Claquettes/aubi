@@ -27,19 +27,28 @@ const THEME_KEYS = [
   '--art-primary',
   '--art-secondary',
   '--art-tertiary',
+  '--art-4',
+  '--art-5',
+  '--art-6',
   '--art-action',
   '--art-action-ink',
 ];
 
 /**
- * Pose les couleurs de pochette (--art-*) sur :root. Priorité : page consultée
- * (album/artiste ouvert) > titre en cours de lecture > défaut (accent papier).
- * Le texte principal reste encre ; seuls fonds/boutons/états actifs se teintent.
+ * Pose les couleurs de pochette (--art-*) sur :root. Priorité : lecteur plein
+ * écran ouvert (titre en cours) > page consultée (album/artiste ouvert) >
+ * titre en cours > défaut (accent papier). Ouvrir le lecteur redonne donc
+ * toujours les couleurs du morceau écouté, même si un autre album est ouvert
+ * derrière. Le texte principal reste encre ; seuls fonds/boutons/états actifs
+ * se teintent.
  */
 export function useAppTheme() {
   const viewedCover = useThemeStore((s) => s.viewedCover);
   const nowPlaying = usePlayerStore((s) => s.currentTrack?.coverUrl);
-  const active = viewedCover ?? nowPlaying ?? null;
+  const playerOpen = usePlayerStore((s) => s.fullPlayerOpen);
+  const active = playerOpen
+    ? (nowPlaying ?? viewedCover ?? null)
+    : (viewedCover ?? nowPlaying ?? null);
   const theme = useCoverPalette(active);
 
   useEffect(() => {

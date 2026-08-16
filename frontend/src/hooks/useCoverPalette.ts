@@ -54,7 +54,7 @@ export function useCoverPalette(
 type RGB = [number, number, number];
 
 function buildTheme(img: HTMLImageElement): CoverTheme {
-  const { primary, secondary, tertiary } = extractPalette(img);
+  const { primary, secondary, tertiary, extra } = extractPalette(img);
   const { action, ink: actionInk } = correctAction(secondary);
 
   // Teinte de thème = la plus saturée entre dominante et vibrante.
@@ -84,6 +84,12 @@ function buildTheme(img: HTMLImageElement): CoverTheme {
     '--art-primary': rgbToHex(primary),
     '--art-secondary': rgbToHex(secondary),
     '--art-tertiary': rgbToHex(tertiary),
+    // Teintes supplémentaires (fond ambiant) : d'autres couleurs présentes
+    // dans la pochette, choisies aussi éloignées que possible les unes des
+    // autres, complétées par des variantes si la pochette en manque.
+    '--art-4': rgbToHex(extra[0]),
+    '--art-5': rgbToHex(extra[1]),
+    '--art-6': rgbToHex(extra[2]),
     '--art-action': rgbToHex(action),
     '--art-action-ink': rgbToHex(actionInk),
   };
@@ -124,10 +130,46 @@ function correctAction(base: RGB): { action: RGB; ink: RGB } {
   };
 }
 
+/** Deux couleurs assez proches pour former la même tache à l'écran. */
+function near(a: RGB, b: RGB): boolean {
+  return (
+    Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) < 40
+  );
+}
+
+/** Retire les couleurs trop proches les unes des autres. */
+function dedupe(colors: RGB[]): RGB[] {
+  const out: RGB[] = [];
+  for (const c of colors) {
+    if (!out.some((o) => near(o, c))) out.push(c);
+  }
+  return out.length ? out : colors.slice(0, 1);
+}
+
+/**
+ * Complète une palette jusqu'à `count` couleurs : on garde les teintes
+ * réellement présentes dans la pochette, puis on décale la teinte des
+ * couleurs retenues pour obtenir des variantes proches mais distinctes. Une
+ * pochette bicolore donne ainsi quand même un fond nuancé.
+ */
+function widenPalette(base: RGB[], count: number): RGB[] {
+  const out = dedupe(base);
+  const shifts = [26, -26, 48, -48, 72, -72];
+  for (let i = 0; out.length < count; i += 1) {
+    const src = base[i % base.length];
+    const [h, s, l] = rgbToHsl(src[0], src[1], src[2]);
+    const shift = shifts[Math.floor(i / base.length) % shifts.length];
+    out.push(hslToRgb((h + shift + 360) % 360, s, l));
+  }
+  return out.slice(0, count);
+}
+
 function extractPalette(img: HTMLImageElement): {
   primary: RGB;
   secondary: RGB;
   tertiary: RGB;
+  /** Trois teintes de plus, pour le fond ambiant. */
+  extra: RGB[];
 } {
   const size = 48;
   const canvas = document.createElement('canvas');
@@ -185,28 +227,72 @@ function extractPalette(img: HTMLImageElement): {
       byVibrancy.find((b) => b !== secondary && b !== dominant) ??
       byVibrancy[1] ??
       dominant;
+
+    // Teintes suivantes : on prend les plus vives encore éloignées d'au moins
+    // 40° de celles déjà retenues, pour éviter six variantes du même orange.
+    const picked = [dominant, secondary, tertiary];
+    const hueOf = (b: Bin) => rgbToHsl(...avg(b))[0];
+    const hues = picked.map(hueOf);
+    for (const bin of byVibrancy) {
+      if (picked.length >= 6) break;
+      if (picked.includes(bin)) continue;
+      const h = hueOf(bin);
+      const far = hues.every((k) => {
+        const d = Math.abs(((h - k + 540) % 360) - 180);
+        return 180 - d >= 40;
+      });
+      if (far) {
+        picked.push(bin);
+        hues.push(h);
+      }
+    }
+    // Les trois premières restent celles du thème actuel (elles pilotent
+    // fonds, accent et boutons) ; les extras sont les autres teintes trouvées,
+    // complétées par des variantes si la pochette n'en offre pas assez.
+    const raw = picked.map(avg);
+    const rest = widenPalette(raw, 9).filter(
+      (c) => !raw.slice(0, 3).some((b) => near(b, c)),
+    );
     return {
-      primary: avg(dominant),
-      secondary: avg(secondary),
-      tertiary: avg(tertiary),
+      primary: raw[0],
+      secondary: raw[1],
+      tertiary: raw[2],
+      extra: widenPalette(rest.length ? rest : raw, 3),
     };
   }
 
   // Pochette monochrome (N&B) : palette NEUTRE dérivée de sa teinte moyenne,
   // pas de repli sur la couleur d'accent par défaut.
   if (n === 0) {
+    const base: RGB[] = [
+      [56, 56, 68],
+      [150, 150, 165],
+      [96, 96, 110],
+    ];
     return {
-      primary: [56, 56, 68],
-      secondary: [150, 150, 165],
-      tertiary: [96, 96, 110],
+      primary: base[0],
+      secondary: base[1],
+      tertiary: base[2],
+      extra: widenPalette(base, 6).slice(3),
     };
   }
   const [mh, msRaw] = rgbToHsl(sr / n, sg / n, sb / n);
   const ms = Math.min(msRaw, 0.14);
+  const mono: RGB[] = [
+    hslToRgb(mh, ms, 0.32),
+    hslToRgb(mh, ms, 0.68),
+    hslToRgb(mh, ms, 0.5),
+  ];
   return {
-    primary: hslToRgb(mh, ms, 0.32),
-    secondary: hslToRgb(mh, ms, 0.68),
-    tertiary: hslToRgb(mh, ms, 0.5),
+    primary: mono[0],
+    secondary: mono[1],
+    tertiary: mono[2],
+    // Pochette neutre : on nuance par la luminosité plutôt que par la teinte.
+    extra: [
+      hslToRgb(mh, ms, 0.24),
+      hslToRgb(mh, ms, 0.58),
+      hslToRgb(mh, ms, 0.42),
+    ],
   };
 }
 
