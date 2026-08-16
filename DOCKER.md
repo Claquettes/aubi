@@ -269,7 +269,7 @@ Pour intégrer aubi dans le `docker-compose.yml` principal du homelab, deux opti
 ### Option A (recommandée) — Fichier séparé
 Garder le `docker-compose.yml` d'aubi dans son propre dossier et le lancer indépendamment :
 ```bash
-cd /home/claq/code/home-server/aubi
+cd /home/claq/code/aubi
 docker compose up -d
 ```
 Le réseau `homelab_proxy` est `external: true`, donc Traefik le détecte automatiquement.
