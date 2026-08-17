@@ -394,4 +394,99 @@ export const fr = {
   'stats.punch.cell': '{day} {hour}h — {plays}',
   'stats.prop.tooltip': '{label} — {count} {unit} ({percent})',
   'stats.prop.unit': 'titres',
+
+  'common.cancel': 'Annuler',
+
+  // ── Bibliothèques ──
+  'libraries.addTitle': 'Ajouter une bibliothèque',
+  'libraries.editTitle': 'Modifier la bibliothèque',
+  'libraries.pathLabel': 'Dossier',
+  'libraries.nameLabel': 'Nom',
+  'libraries.namePlaceholder': 'Ma musique',
+  'libraries.typeLabel': 'Type',
+  'libraries.browse': 'Parcourir',
+  'libraries.add': 'Ajouter',
+  'libraries.save': 'Enregistrer',
+  'libraries.saving': 'Enregistrement…',
+  'libraries.type.musicHint':
+    'Arborescence attendue : Artiste / Album / titres. Un sous-dossier « covers » marque des reprises.',
+  'libraries.type.concertHint':
+    'Un dossier par concert, par exemple « Artiste - Lieu - Date ».',
+  'libraries.type.audiobookHint':
+    'Un dossier par livre, un fichier par chapitre. Un dossier « Bible » est reconnu comme tel.',
+  'libraries.pickFolder': 'Choisir un dossier',
+  'libraries.parentFolder': 'Dossier parent',
+  'libraries.noSubfolder': 'Aucun sous-dossier ici.',
+  'libraries.audioHere':
+    '{count} fichier audio dans ce dossier|{count} fichiers audio dans ce dossier',
+  'libraries.pickThis': 'Choisir ce dossier',
+  'libraries.tracks': '{count} titre|{count} titres',
+  'libraries.diskFree': '{size} libres',
+  'libraries.lastScan': 'Scannée le {date}',
+  'libraries.neverScanned': 'Jamais scannée',
+  'libraries.hidden': 'Masquée — {count} titre conservé|Masquée — {count} titres conservés',
+  'libraries.enable': 'Activer',
+  'libraries.disable': 'Désactiver',
+  'libraries.scan': 'Scanner',
+  'libraries.edit': 'Modifier',
+  'libraries.remove': 'Supprimer',
+  'libraries.confirmRemove': 'Confirmer',
+  'libraries.removeHint':
+    "La bibliothèque disparaît d'aubi ; les fichiers restent sur le disque.",
+  'libraries.unavailable': 'Dossier introuvable ou illisible par le serveur.',
+  'libraries.created': 'Bibliothèque ajoutée',
+  'libraries.saved': 'Bibliothèque enregistrée',
+  'libraries.removed': '« {name} » supprimée',
+  'libraries.enabled': 'Bibliothèque activée',
+  'libraries.disabled': 'Bibliothèque désactivée',
+  'libraries.scanStarted': 'Scan lancé',
+
+  // ── Première configuration ──
+  'setup.stepsAria': 'Étapes de la configuration',
+  'setup.welcomeTitle': 'Bienvenue',
+  'setup.welcomeText':
+    'aubi diffuse votre bibliothèque audio depuis votre propre machine. Trois écrans suffisent : la langue, vos dossiers, le premier scan.',
+  'setup.start': 'Commencer',
+  'setup.librariesTitle': 'Vos bibliothèques',
+  'setup.librariesText':
+    "Indiquez les dossiers à indexer. Le type d'une bibliothèque décide de la rubrique où son contenu apparaît.",
+  'setup.mediaRoot': 'Le serveur explore à partir de {path}.',
+  'setup.back': 'Retour',
+  'setup.next': 'Continuer',
+  'setup.needOne': 'Ajoutez au moins un dossier pour continuer.',
+  'setup.scanTitle': 'Premier scan',
+  'setup.scanText':
+    'aubi lit les tags de chaque fichier et en extrait les pochettes. Le scan continue en tâche de fond : vous pouvez entrer tout de suite.',
+  'setup.indexed': '{count} titre indexé|{count} titres indexés',
+  'setup.enter': 'Entrer dans aubi',
+  'setup.scanBackground':
+    'Les bibliothèques se modifient à tout moment depuis les Paramètres.',
+
+  // ── Erreurs renvoyées par l'API ──
+  'errors.library.path.absolute': 'Le chemin doit être absolu (commencer par « / »).',
+  'errors.library.path.notFound': "Ce dossier n'existe pas sur le serveur.",
+  'errors.library.path.notDirectory': "Ce chemin n'est pas un dossier.",
+  'errors.library.path.unreadable': "Le serveur n'a pas le droit de lire ce dossier.",
+  'errors.library.path.conflict': 'Ce dossier chevauche une bibliothèque existante.',
+  'errors.library.notFound': 'Bibliothèque introuvable.',
+  'errors.library.disabled': 'Cette bibliothèque est désactivée.',
+  'errors.browse.outsideRoot': 'Dossier hors de la racine autorisée.',
+  'errors.browse.notFound': 'Dossier introuvable.',
+  'errors.browse.unreadable': 'Dossier illisible.',
+  'errors.setup.noLibrary': 'Ajoutez au moins une bibliothèque.',
+
+  // ── Paramètres : bibliothèques et stockage ──
+  'settings.librariesCard': 'Bibliothèques',
+  'settings.librariesHint':
+    "Les dossiers scannés par aubi. Une bibliothèque désactivée disparaît de l'application ; ses fichiers, ses likes et ses statistiques restent intacts.",
+  'settings.noLibrary': 'Aucune bibliothèque déclarée.',
+  'settings.storageCard': 'Place occupée',
+  'settings.figure.tracks': 'Titres',
+  'settings.figure.size': 'Sur le disque',
+  'settings.figure.duration': 'Durée',
+  'settings.figure.albums': 'Albums',
+  'settings.figure.artists': 'Artistes',
+  'settings.hidden':
+    '{count} titre masqué ({size}) dans les bibliothèques désactivées.|{count} titres masqués ({size}) dans les bibliothèques désactivées.',
+  'settings.disk': '{free} libres sur {total} — {path}',
 } as const;

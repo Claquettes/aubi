@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { useEnabledSections } from '@/hooks/useLibraries';
 import { useT, type TFn, type TKey } from '@/i18n';
+import type { LibraryType } from '@/types/api';
 import styles from './Sidebar.module.css';
 
 interface Item {
@@ -23,15 +25,26 @@ interface Item {
 /** Rubriques : la barre se lit comme un sommaire, pas comme une liste plate. */
 const SECTIONS: {
   title: TKey;
-  items: { to: string; label: TKey; icon: LucideIcon }[];
+  items: {
+    to: string;
+    label: TKey;
+    icon: LucideIcon;
+    /** Rubrique alimentée par une bibliothèque : masquée si aucune n'est active. */
+    library?: LibraryType;
+  }[];
 }[] = [
   {
     title: 'nav.section.library',
     items: [
       // Pas de `end` : la rubrique reste allumée sur /music/albums/… et /music/artists/…
-      { to: '/music', label: 'nav.music', icon: Music2 },
-      { to: '/concerts', label: 'nav.concerts', icon: Mic2 },
-      { to: '/audiobooks', label: 'nav.audiobooks', icon: BookOpen },
+      { to: '/music', label: 'nav.music', icon: Music2, library: 'music' },
+      { to: '/concerts', label: 'nav.concerts', icon: Mic2, library: 'concert' },
+      {
+        to: '/audiobooks',
+        label: 'nav.audiobooks',
+        icon: BookOpen,
+        library: 'audiobook',
+      },
     ],
   },
   {
@@ -66,6 +79,11 @@ function Link({ to, label, icon: Icon }: Item) {
 
 export function Sidebar() {
   const t: TFn = useT();
+  const isEnabled = useEnabledSections();
+  const sections = SECTIONS.map((section) => ({
+    ...section,
+    items: section.items.filter((i) => !i.library || isEnabled(i.library)),
+  })).filter((section) => section.items.length > 0);
 
   return (
     <aside className={styles.aside}>
@@ -85,7 +103,7 @@ export function Sidebar() {
       </NavLink>
 
       <nav className={styles.nav} aria-label={t('nav.aria')}>
-        {SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.title} className={styles.section}>
             <p className={styles.eyebrow}>{t(section.title)}</p>
             {section.items.map((item) => (

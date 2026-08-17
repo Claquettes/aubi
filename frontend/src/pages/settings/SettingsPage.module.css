@@ -63,6 +63,62 @@
   outline: none;
   box-shadow: var(--focus-ring);
 }
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 720px;
+}
+/* Chiffres clés de la bibliothèque : place occupée, nombre de morceaux… */
+.figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 720px;
+}
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.figureValue {
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.figureLabel {
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+.breakdown {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 480px;
+}
+.breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--step--1);
+  color: var(--color-ink-soft);
+  border-bottom: 1px solid var(--color-hairline);
+  padding-bottom: var(--space-2);
+}
+.breakdownValue {
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .progressRow {
   display: flex;
   align-items: center;

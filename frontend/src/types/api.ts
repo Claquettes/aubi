@@ -333,6 +333,66 @@ export interface ScannerStatus {
   errorMessage: string | null;
 }
 
+export type LibraryType = 'music' | 'concert' | 'audiobook';
+
+export interface Library {
+  id: string;
+  name: string;
+  type: LibraryType;
+  path: string;
+  enabled: boolean;
+  position: number;
+  lastScanAt: string | null;
+  trackCount: number;
+  sizeBytes: number;
+  durationMs: number;
+  /** Faux quand le dossier a disparu ou n'est plus lisible par le serveur. */
+  available: boolean;
+  writable: boolean;
+  diskTotalBytes: number | null;
+  diskFreeBytes: number | null;
+}
+
+export interface SetupState {
+  completed: boolean;
+  completedAt: string | null;
+  libraryCount: number;
+  mediaRoot: string;
+  mediaRootWritable: boolean;
+}
+
+export interface BrowseEntry {
+  name: string;
+  path: string;
+}
+
+export interface BrowseResult {
+  path: string;
+  parent: string | null;
+  roots: string[];
+  writable: boolean;
+  audioFileCount: number;
+  entries: BrowseEntry[];
+}
+
+export interface StorageInfo {
+  trackCount: number;
+  sizeBytes: number;
+  durationMs: number;
+  albumCount: number;
+  artistCount: number;
+  hiddenTrackCount: number;
+  hiddenSizeBytes: number;
+  bySection: {
+    section: LibraryType;
+    trackCount: number;
+    sizeBytes: number;
+    durationMs: number;
+  }[];
+  mediaRoot: string;
+  disk: { totalBytes: number; freeBytes: number } | null;
+}
+
 export type StatsPeriod = 'week' | 'month' | 'year' | 'all';
 
 export interface Paginated<T> {

@@ -10,6 +10,7 @@ import {
 import { Artist } from './artist.entity';
 import { Album } from './album.entity';
 import { Concert } from './concert.entity';
+import { Library } from './library.entity';
 
 export type TrackSection = 'music' | 'concert' | 'audiobook';
 
@@ -68,6 +69,14 @@ export class Track {
 
   @Column({ type: 'varchar', length: 32 })
   section: TrackSection;
+
+  /** Bibliothèque d'origine ; null pour les pistes d'une bibliothèque supprimée. */
+  @Column({ name: 'library_id', type: 'uuid', nullable: true })
+  libraryId: string | null;
+
+  @ManyToOne(() => Library, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'library_id' })
+  library: Library | null;
 
   @Column({ name: 'is_cover', type: 'boolean', default: false })
   isCover: boolean;

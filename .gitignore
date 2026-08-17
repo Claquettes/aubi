@@ -4,6 +4,10 @@ dist/
 # est un volume Docker. Que des chunk-*.js régénérables.
 .vite/
 *.tsbuildinfo
+# Pochettes extraites par le scanner : volume Docker en temps normal, dossier
+# local quand le backend tourne en natif. Régénérables depuis les fichiers.
+backend/covers/
+backend/static/
 .env
 *.log
 .DS_Store

@@ -29,6 +29,13 @@ export class AudiobooksService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 50;
     const qb = this.bookRepo.createQueryBuilder('b');
+    // Livre sans chapitre lisible (fichiers disparus, bibliothèque
+    // désactivée) : la ligne reste en base, mais on ne l'affiche plus.
+    qb.andWhere(
+      `EXISTS (SELECT 1 FROM audiobook_chapters ac
+                 JOIN tracks t ON t.id = ac.track_id AND t.deleted_at IS NULL
+                WHERE ac.audiobook_id = b.id)`,
+    );
     if (query.search?.trim()) {
       qb.andWhere(
         '(b.title ILIKE :q OR b.author ILIKE :q)',
