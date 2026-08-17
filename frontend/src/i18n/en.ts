@@ -384,4 +384,99 @@ export const en: Record<keyof typeof fr, string> = {
   'stats.punch.cell': '{day} {hour}:00 — {plays}',
   'stats.prop.tooltip': '{label} — {count} {unit} ({percent})',
   'stats.prop.unit': 'tracks',
+
+  'common.cancel': 'Cancel',
+
+  // ── Libraries ──
+  'libraries.addTitle': 'Add a library',
+  'libraries.editTitle': 'Edit library',
+  'libraries.pathLabel': 'Folder',
+  'libraries.nameLabel': 'Name',
+  'libraries.namePlaceholder': 'My music',
+  'libraries.typeLabel': 'Type',
+  'libraries.browse': 'Browse',
+  'libraries.add': 'Add',
+  'libraries.save': 'Save',
+  'libraries.saving': 'Saving…',
+  'libraries.type.musicHint':
+    'Expected layout: Artist / Album / tracks. A “covers” subfolder marks cover versions.',
+  'libraries.type.concertHint':
+    'One folder per concert, e.g. “Artist - Venue - Date”.',
+  'libraries.type.audiobookHint':
+    'One folder per book, one file per chapter. A “Bible” folder is recognised as such.',
+  'libraries.pickFolder': 'Pick a folder',
+  'libraries.parentFolder': 'Parent folder',
+  'libraries.noSubfolder': 'No subfolder here.',
+  'libraries.audioHere':
+    '{count} audio file in this folder|{count} audio files in this folder',
+  'libraries.pickThis': 'Use this folder',
+  'libraries.tracks': '{count} track|{count} tracks',
+  'libraries.diskFree': '{size} free',
+  'libraries.lastScan': 'Scanned on {date}',
+  'libraries.neverScanned': 'Never scanned',
+  'libraries.hidden': 'Hidden — {count} track kept|Hidden — {count} tracks kept',
+  'libraries.enable': 'Enable',
+  'libraries.disable': 'Disable',
+  'libraries.scan': 'Scan',
+  'libraries.edit': 'Edit',
+  'libraries.remove': 'Remove',
+  'libraries.confirmRemove': 'Confirm',
+  'libraries.removeHint':
+    'The library leaves aubi; the files stay on disk.',
+  'libraries.unavailable': 'Folder missing or unreadable by the server.',
+  'libraries.created': 'Library added',
+  'libraries.saved': 'Library saved',
+  'libraries.removed': '“{name}” removed',
+  'libraries.enabled': 'Library enabled',
+  'libraries.disabled': 'Library disabled',
+  'libraries.scanStarted': 'Scan started',
+
+  // ── First-run setup ──
+  'setup.stepsAria': 'Setup steps',
+  'setup.welcomeTitle': 'Welcome',
+  'setup.welcomeText':
+    'aubi streams your audio library from your own machine. Three screens: the language, your folders, the first scan.',
+  'setup.start': 'Get started',
+  'setup.librariesTitle': 'Your libraries',
+  'setup.librariesText':
+    'Point aubi at the folders to index. A library’s type decides which section its content shows up in.',
+  'setup.mediaRoot': 'The server browses from {path}.',
+  'setup.back': 'Back',
+  'setup.next': 'Continue',
+  'setup.needOne': 'Add at least one folder to continue.',
+  'setup.scanTitle': 'First scan',
+  'setup.scanText':
+    'aubi reads the tags of every file and pulls out the artwork. The scan keeps running in the background — you can come in right away.',
+  'setup.indexed': '{count} track indexed|{count} tracks indexed',
+  'setup.enter': 'Enter aubi',
+  'setup.scanBackground':
+    'Libraries can be changed at any time from Settings.',
+
+  // ── API errors ──
+  'errors.library.path.absolute': 'The path must be absolute (start with “/”).',
+  'errors.library.path.notFound': 'That folder does not exist on the server.',
+  'errors.library.path.notDirectory': 'That path is not a folder.',
+  'errors.library.path.unreadable': 'The server is not allowed to read that folder.',
+  'errors.library.path.conflict': 'That folder overlaps an existing library.',
+  'errors.library.notFound': 'Library not found.',
+  'errors.library.disabled': 'That library is disabled.',
+  'errors.browse.outsideRoot': 'Folder outside the allowed root.',
+  'errors.browse.notFound': 'Folder not found.',
+  'errors.browse.unreadable': 'Folder unreadable.',
+  'errors.setup.noLibrary': 'Add at least one library.',
+
+  // ── Settings: libraries and storage ──
+  'settings.librariesCard': 'Libraries',
+  'settings.librariesHint':
+    'The folders aubi scans. A disabled library disappears from the app; its files, likes and stats stay untouched.',
+  'settings.noLibrary': 'No library declared yet.',
+  'settings.storageCard': 'Space used',
+  'settings.figure.tracks': 'Tracks',
+  'settings.figure.size': 'On disk',
+  'settings.figure.duration': 'Duration',
+  'settings.figure.albums': 'Albums',
+  'settings.figure.artists': 'Artists',
+  'settings.hidden':
+    '{count} track hidden ({size}) in disabled libraries.|{count} tracks hidden ({size}) in disabled libraries.',
+  'settings.disk': '{free} free of {total} — {path}',
 };

@@ -1,0 +1,218 @@
+/* ── Carte d'une bibliothèque (paramètres, assistant) ── */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--color-paper) 70%, transparent);
+  width: 100%;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+.cardOff {
+  opacity: 0.55;
+}
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.cardName {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink);
+  margin-right: auto;
+  overflow-wrap: anywhere;
+}
+.badge {
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-round);
+  padding: 2px var(--space-2);
+  white-space: nowrap;
+}
+.path {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--step--1);
+  color: var(--color-ink-soft);
+  overflow-wrap: anywhere;
+}
+.stats {
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+.cardFoot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
+.meta {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  margin-right: auto;
+}
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.danger {
+  color: var(--color-danger);
+}
+
+/* ── Interrupteur actif / inactif ── */
+.switch,
+.switchOn {
+  appearance: none;
+  border: 1px solid var(--color-hairline);
+  background: color-mix(in oklab, var(--color-canvas) 70%, transparent);
+  border-radius: var(--radius-round);
+  width: 42px;
+  height: 24px;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.switchOn {
+  background: var(--art-action, var(--color-accent));
+  border-color: transparent;
+  justify-content: flex-end;
+}
+.knob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-round);
+  background: var(--color-ink);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.switchOn .knob {
+  background: var(--color-on-accent);
+}
+.switch:focus-visible,
+.switchOn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Formulaire ── */
+.label {
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+.input {
+  background: var(--color-paper-high);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  color: var(--color-ink);
+  font-family: var(--font-body, var(--font-ui));
+  font-size: var(--step--1);
+  outline: none;
+  width: 100%;
+}
+.input:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+.pathRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.typeRow {
+  display: inline-flex;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-round);
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-paper) 70%, transparent);
+}
+.type,
+.typeOn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.type:hover {
+  color: var(--color-ink);
+}
+.typeOn {
+  background: var(--art-action, var(--color-accent));
+  color: var(--color-on-accent);
+}
+
+/* ── Navigateur de dossiers ── */
+.pickerPath {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--step--1);
+  color: var(--color-ink-soft);
+  overflow-wrap: anywhere;
+}
+.pickerList {
+  display: flex;
+  flex-direction: column;
+  max-height: 42vh;
+  overflow-y: auto;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+}
+.pickerRow {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-hairline);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  color: var(--color-ink-soft);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.pickerRow:last-child {
+  border-bottom: none;
+}
+.pickerRow:hover {
+  background: color-mix(in oklab, var(--color-paper-high) 80%, transparent);
+  color: var(--color-ink);
+}
+.pickerRow:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.hint {
+  font-size: var(--step--2);
+  color: var(--color-ink-muted);
+  line-height: var(--leading-normal);
+}
+.error {
+  font-size: var(--step--1);
+  color: var(--color-danger);
+}

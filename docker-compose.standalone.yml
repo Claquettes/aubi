@@ -1,34 +1,30 @@
-name: aubi
+# Installation autonome : une machine, Docker, rien d'autre.
+#
+#   docker compose -f docker-compose.standalone.yml up -d
+#
+# L'interface répond sur http://localhost:8080 (réglable avec AUBI_PORT).
+# Pas de Traefik, pas de réseau externe, pas de domaine à posséder.
+#
+# Le fichier docker-compose.yml, lui, vise une intégration derrière Traefik +
+# Authelia (voir docs/installation.md).
 
-networks:
-  homelab_proxy:
-    external: true
-  aubi_internal:
-    internal: true
+name: aubi
 
 services:
   aubi-frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: prod
     container_name: aubi_frontend
     restart: unless-stopped
-    networks:
-      - homelab_proxy
+    # nginx sert l'interface et relaie /api vers le backend : une seule porte
+    # d'entrée à ouvrir.
+    ports:
+      - "${AUBI_PORT:-8080}:80"
     depends_on:
       aubi-backend:
         condition: service_healthy
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.aubi.rule=Host(`aubi.${DOMAIN}`)
-      - traefik.http.routers.aubi.entrypoints=websecure
-      - traefik.http.routers.aubi.tls.certresolver=letsencrypt
-      - traefik.http.services.aubi.loadbalancer.server.port=80
-      - traefik.http.routers.aubi.middlewares=authelia@docker,security-headers@file
-      - homepage.group=Media
-      - homepage.name=aubi
-      - homepage.icon=headphones.png
-      - homepage.href=https://aubi.${DOMAIN}
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
       interval: 30s
@@ -39,33 +35,23 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: prod
     container_name: aubi_backend
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://aubi:${AUBI_DB_PASSWORD}@aubi-db:5432/aubi
-      # Racine explorée par l'assistant et la page Paramètres. Montée à
-      # l'identique ci-dessous : le chemin affiché dans l'application est le
-      # vrai chemin de la machine, et les bibliothèques se règlent depuis l'UI.
+      # Racine explorable depuis l'application, montée à l'identique : le
+      # chemin affiché dans l'interface est le vrai chemin de la machine.
       AUBI_MEDIA_ROOT: ${AUBI_MEDIA_ROOT}
       PORT: "3000"
       COVERS_PATH: /app/covers
     volumes:
       - ${AUBI_MEDIA_ROOT}:${AUBI_MEDIA_ROOT}:rw
       - aubi_covers:/app/covers
-    networks:
-      - homelab_proxy
-      - aubi_internal
     depends_on:
       aubi-db:
         condition: service_healthy
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.aubi-api.rule=Host(`aubi.${DOMAIN}`) && PathPrefix(`/api`)
-      - traefik.http.routers.aubi-api.entrypoints=websecure
-      - traefik.http.routers.aubi-api.tls.certresolver=letsencrypt
-      - traefik.http.services.aubi-api.loadbalancer.server.port=3000
-      - traefik.http.routers.aubi-api.middlewares=authelia@docker,security-headers@file
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/v1/health || exit 1"]
       interval: 30s
@@ -83,13 +69,6 @@ services:
       POSTGRES_DB: aubi
     volumes:
       - aubi_db:/var/lib/postgresql/data
-    networks:
-      - aubi_internal
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aubi -d aubi"]
       interval: 10s

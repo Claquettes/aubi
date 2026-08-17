@@ -10,6 +10,11 @@ import { TracksService } from '../tracks/tracks.service';
 
 @Injectable()
 export class AlbumsService {
+  /** Album encore présent dans la bibliothèque visible. */
+  private static readonly HAS_TRACKS_SQL = `EXISTS (
+    SELECT 1 FROM tracks t WHERE t.album_id = a.id AND t.deleted_at IS NULL
+  )`;
+
   // Lectures d'un album = somme des écoutes de ses titres (v_track_play_counts
   // ne compte que les écoutes terminées).
   private static readonly PLAY_COUNT_SQL = `(
@@ -110,7 +115,11 @@ export class AlbumsService {
     const limit = query.limit ?? 50;
     const qb = this.albumRepo
       .createQueryBuilder('a')
-      .leftJoinAndSelect('a.artist', 'artist');
+      .leftJoinAndSelect('a.artist', 'artist')
+      // Un album dont plus aucune piste n'est visible (fichiers disparus,
+      // bibliothèque désactivée) n'a rien à faire dans la grille : sa ligne
+      // reste en base pour retrouver likes et pochette au retour.
+      .andWhere(AlbumsService.HAS_TRACKS_SQL);
     if (query.artistId) {
       qb.andWhere('a.artist_id = :artistId', { artistId: query.artistId });
     }

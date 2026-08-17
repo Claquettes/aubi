@@ -18,6 +18,8 @@ import { SearchModule } from './modules/search/search.module';
 import { CollectionsModule } from './modules/collections/collections.module';
 import { GraphModule } from './modules/graph/graph.module';
 import { MetadataModule } from './modules/metadata/metadata.module';
+import { LibrariesModule } from './modules/libraries/libraries.module';
+import { SystemModule } from './modules/system/system.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { MetadataModule } from './modules/metadata/metadata.module';
     CollectionsModule,
     GraphModule,
     MetadataModule,
+    LibrariesModule,
+    SystemModule,
   ],
 })
 export class AppModule {}

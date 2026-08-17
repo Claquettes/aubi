@@ -17,6 +17,8 @@ import { PlayEvent } from './entities/play-event.entity';
 import { AlbumPlay } from './entities/album-play.entity';
 import { AudiobookProgress } from './entities/audiobook-progress.entity';
 import { ScannerState } from './entities/scanner-state.entity';
+import { Library } from './entities/library.entity';
+import { AppSetting } from './entities/app-setting.entity';
 
 const entities = [
   Artist,
@@ -35,6 +37,8 @@ const entities = [
   AlbumPlay,
   AudiobookProgress,
   ScannerState,
+  Library,
+  AppSetting,
 ];
 
 @Module({

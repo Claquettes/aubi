@@ -51,7 +51,12 @@ export class ConcertsService {
     const limit = query.limit ?? 50;
     const qb = this.concertRepo
       .createQueryBuilder('c')
-      .leftJoinAndSelect('c.artist', 'artist');
+      .leftJoinAndSelect('c.artist', 'artist')
+      // Concert sans piste visible (fichiers disparus, bibliothèque
+      // désactivée) : la ligne reste en base, mais on ne l'affiche plus.
+      .andWhere(
+        `EXISTS (SELECT 1 FROM tracks t WHERE t.concert_id = c.id AND t.deleted_at IS NULL)`,
+      );
     if (query.artistId) {
       qb.andWhere('c.artist_id = :artistId', { artistId: query.artistId });
     }

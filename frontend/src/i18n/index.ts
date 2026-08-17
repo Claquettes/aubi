@@ -87,5 +87,22 @@ export function useT(): TFn {
   ]);
 }
 
+/**
+ * Erreur d'API : le backend renvoie un code stable (« library.path.notFound »),
+ * traduit ici s'il est connu, affiché tel quel sinon.
+ */
+export function useApiError(): (e: unknown) => string {
+  const t = useT();
+  return useCallback(
+    (e: unknown) => {
+      const raw = e instanceof Error ? e.message : String(e);
+      const key = `errors.${raw}` as TKey;
+      const out = t(key);
+      return out === key ? raw : out;
+    },
+    [t],
+  );
+}
+
 export const useLang = () => useLangStore((s) => s.lang);
 export const useSetLang = () => useLangStore((s) => s.setLang);

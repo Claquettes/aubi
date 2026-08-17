@@ -7,13 +7,14 @@
 #   ./start.sh --migrate    joue les migrations TypeORM en attente
 #   ./start.sh --scan       lance un scan de la bibliothèque après le démarrage
 #
-# Le dossier musique se règle avec MUSIC_PATH (défaut : ~/Music) :
-#   MUSIC_PATH=/autre/chemin ./start.sh
+# La racine explorable se règle avec AUBI_MEDIA_ROOT (défaut : ~) ; les
+# bibliothèques elles-mêmes se choisissent depuis l'application :
+#   AUBI_MEDIA_ROOT=/mnt/disque ./start.sh
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
-MUSIC_PATH="${MUSIC_PATH:-$HOME/Music}"
+AUBI_MEDIA_ROOT="${AUBI_MEDIA_ROOT:-$HOME}"
 NETWORK=homelab_proxy
 BUILD=false
 INSTALL=false
@@ -41,7 +42,7 @@ done
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.override.yml)
 [[ -f docker-compose.local.yml ]] && COMPOSE+=(-f docker-compose.local.yml)
 
-compose() { MUSIC_PATH="$MUSIC_PATH" "${COMPOSE[@]}" "$@"; }
+compose() { AUBI_MEDIA_ROOT="$AUBI_MEDIA_ROOT" "${COMPOSE[@]}" "$@"; }
 
 # ── Vérifications ───────────────────────────────────────────────────────────
 if ! docker info >/dev/null 2>&1; then
@@ -49,9 +50,9 @@ if ! docker info >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -d "$MUSIC_PATH" ]]; then
-  echo "✗ Dossier musique introuvable : $MUSIC_PATH" >&2
-  echo "  Relance avec MUSIC_PATH=/le/bon/chemin ./start.sh" >&2
+if [[ ! -d "$AUBI_MEDIA_ROOT" ]]; then
+  echo "✗ Racine média introuvable : $AUBI_MEDIA_ROOT" >&2
+  echo "  Relance avec AUBI_MEDIA_ROOT=/le/bon/chemin ./start.sh" >&2
   exit 1
 fi
 
@@ -62,7 +63,8 @@ if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
 fi
 
 # ── Démarrage ───────────────────────────────────────────────────────────────
-echo "→ Musique : $MUSIC_PATH"
+echo "→ Racine média : $AUBI_MEDIA_ROOT"
+echo "  (les bibliothèques se règlent dans l'application, page Paramètres)"
 UP_ARGS=(up -d --remove-orphans)
 $BUILD && UP_ARGS+=(--build)
 
@@ -112,7 +114,7 @@ if $MIGRATE; then
 fi
 
 if $SCAN; then
-  echo "→ Scan de la bibliothèque (en tâche de fond côté serveur)"
+  echo "→ Scan des bibliothèques (en tâche de fond côté serveur)"
   curl -sf -X POST "$API/scanner/scan" >/dev/null && echo "  scan lancé"
 fi
 

@@ -242,10 +242,15 @@ export class ArtistsService {
   }
 
   findAlbums(id: string) {
-    return this.albumRepo.find({
-      where: { artistId: id },
-      order: { title: 'ASC' },
-    });
+    return this.albumRepo
+      .createQueryBuilder('a')
+      .where('a.artist_id = :id', { id })
+      // Masque les albums vidés (fichiers disparus, bibliothèque désactivée).
+      .andWhere(
+        `EXISTS (SELECT 1 FROM tracks t WHERE t.album_id = a.id AND t.deleted_at IS NULL)`,
+      )
+      .orderBy('a.title', 'ASC')
+      .getMany();
   }
 
   findTracks(id: string, query: TracksQueryDto) {

@@ -49,10 +49,15 @@ export class SearchService {
     const { playMap, liked } =
       await this.tracksService.getBatchTrackStats(ids);
 
+    // Les entités vidées (fichiers disparus, bibliothèque désactivée) restent
+    // en base mais ne doivent pas remonter dans les résultats.
     const albums = await this.albumRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.artist', 'artist')
       .where('a.title ILIKE :term', { term })
+      .andWhere(
+        `EXISTS (SELECT 1 FROM tracks t WHERE t.album_id = a.id AND t.deleted_at IS NULL)`,
+      )
       .take(lim)
       .getMany();
 
@@ -66,12 +71,20 @@ export class SearchService {
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.artist', 'artist')
       .where('c.title ILIKE :term OR c.venue ILIKE :term', { term })
+      .andWhere(
+        `EXISTS (SELECT 1 FROM tracks t WHERE t.concert_id = c.id AND t.deleted_at IS NULL)`,
+      )
       .take(lim)
       .getMany();
 
     const audiobooks = await this.bookRepo
       .createQueryBuilder('b')
       .where('b.title ILIKE :term OR b.author ILIKE :term', { term })
+      .andWhere(
+        `EXISTS (SELECT 1 FROM audiobook_chapters ac
+                   JOIN tracks t ON t.id = ac.track_id AND t.deleted_at IS NULL
+                  WHERE ac.audiobook_id = b.id)`,
+      )
       .take(lim)
       .getMany();
 

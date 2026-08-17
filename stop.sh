@@ -28,8 +28,8 @@ done
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.override.yml)
 [[ -f docker-compose.local.yml ]] && COMPOSE+=(-f docker-compose.local.yml)
 
-# MUSIC_PATH n'a aucun effet à l'arrêt, mais compose râle si la variable manque.
-compose() { MUSIC_PATH="${MUSIC_PATH:-$HOME/Music}" "${COMPOSE[@]}" "$@"; }
+# AUBI_MEDIA_ROOT n'a aucun effet à l'arrêt, mais compose râle si elle manque.
+compose() { AUBI_MEDIA_ROOT="${AUBI_MEDIA_ROOT:-$HOME}" "${COMPOSE[@]}" "$@"; }
 
 case "$MODE" in
   stop)

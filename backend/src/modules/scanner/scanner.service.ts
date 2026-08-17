@@ -3,10 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { readdir } from 'fs/promises';
-import { join, relative, sep } from 'path';
+import { dirname, join, relative, sep } from 'path';
 import { access, constants } from 'fs/promises';
-import chokidar from 'chokidar';
+import chokidar, { type FSWatcher } from 'chokidar';
 import { v4 as uuidv4 } from 'uuid';
+import { Library } from '../../database/entities/library.entity';
 import { Artist } from '../../database/entities/artist.entity';
 import { Album } from '../../database/entities/album.entity';
 import { Track, TrackSection } from '../../database/entities/track.entity';
@@ -43,14 +44,30 @@ async function* walkDir(dir: string): AsyncGenerator<string> {
   }
 }
 
+/**
+ * Compatibilité avec l'ancienne convention « un seul dossier racine découpé en
+ * music/ concerts/ audiobooks/ » : dans une bibliothèque musicale, ces trois
+ * dossiers de tête gardent leur sens et le segment est retiré du chemin.
+ */
+const LEGACY_ROOTS: Record<string, TrackSection> = {
+  music: 'music',
+  concerts: 'concert',
+  concert: 'concert',
+  audiobooks: 'audiobook',
+  audiobook: 'audiobook',
+};
+
 @Injectable()
 export class ScannerService implements OnModuleInit {
   private readonly logger = new Logger(ScannerService.name);
   private scanRunning = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private watchers: FSWatcher[] = [];
 
   constructor(
     private readonly config: ConfigService,
+    @InjectRepository(Library)
+    private readonly libraryRepo: Repository<Library>,
     @InjectRepository(Artist)
     private readonly artistRepo: Repository<Artist>,
     @InjectRepository(Album)
@@ -72,31 +89,63 @@ export class ScannerService implements OnModuleInit {
     private readonly coverResolver: CoverResolverService,
   ) {}
 
-  private get musicPath(): string {
-    return this.config.get<string>('musicPath') ?? '/music';
+  private enabledLibraries(): Promise<Library[]> {
+    return this.libraryRepo.find({
+      where: { enabled: true },
+      order: { position: 'ASC', createdAt: 'ASC' },
+    });
   }
 
   async onModuleInit(): Promise<void> {
-    try {
-      await access(this.musicPath, constants.R_OK);
-    } catch {
-      this.logger.warn(`MUSIC_PATH not readable: ${this.musicPath}`);
-      return;
+    await this.refreshWatchers();
+
+    // Un scan interrompu (redémarrage, crash) laisse l'état à « scanning » :
+    // sans ce rattrapage, l'application afficherait une barre de progression
+    // figée et refuserait tout nouveau scan.
+    const previous = await this.getOrCreateState();
+    if (previous.status === 'scanning') {
+      previous.status = 'idle';
+      previous.currentScanId = null;
+      previous.scanProgress = 0;
+      await this.scannerRepo.save(previous);
     }
-    chokidar
-      .watch(this.musicPath, {
-        ignoreInitial: true,
-        awaitWriteFinish: { stabilityThreshold: 2000, pollInterval: 100 },
-      })
-      .on('all', () => this.scheduleDebouncedScan());
 
     const scanOnStart = this.config.get<boolean>('scanOnStart') ?? true;
     if (!scanOnStart) return;
+    const libraries = await this.enabledLibraries();
+    if (libraries.length === 0) return; // première installation : rien à scanner
     const state = await this.getOrCreateState();
     const last = state.lastScanAt?.getTime() ?? 0;
     const hour = 3600_000;
     if (!last || Date.now() - last > hour) {
       void this.startScan();
+    }
+  }
+
+  /**
+   * (Re)pose un observateur par bibliothèque active. Appelé au démarrage et à
+   * chaque changement de bibliothèque (ajout, chemin modifié, activation…).
+   */
+  async refreshWatchers(): Promise<void> {
+    await Promise.all(this.watchers.map((w) => w.close()));
+    this.watchers = [];
+    for (const library of await this.enabledLibraries()) {
+      try {
+        await access(library.path, constants.R_OK);
+      } catch {
+        this.logger.warn(
+          `Bibliothèque « ${library.name} » illisible : ${library.path}`,
+        );
+        continue;
+      }
+      this.watchers.push(
+        chokidar
+          .watch(library.path, {
+            ignoreInitial: true,
+            awaitWriteFinish: { stabilityThreshold: 2000, pollInterval: 100 },
+          })
+          .on('all', () => this.scheduleDebouncedScan()),
+      );
     }
   }
 
@@ -133,17 +182,18 @@ export class ScannerService implements OnModuleInit {
     };
   }
 
-  async startScan(): Promise<{ status: string; scanId: string }> {
+  /** `libraryId` limite le scan à une seule bibliothèque (bouton par carte). */
+  async startScan(libraryId?: string): Promise<{ status: string; scanId: string }> {
     if (this.scanRunning) {
       const s = await this.getOrCreateState();
       return { status: 'started', scanId: s.currentScanId ?? uuidv4() };
     }
     const scanId = uuidv4();
-    void this.runScanJob(scanId);
+    void this.runScanJob(scanId, libraryId);
     return { status: 'started', scanId };
   }
 
-  private async runScanJob(scanId: string): Promise<void> {
+  private async runScanJob(scanId: string, libraryId?: string): Promise<void> {
     if (this.scanRunning) return;
     this.scanRunning = true;
     const state = await this.getOrCreateState();
@@ -155,21 +205,45 @@ export class ScannerService implements OnModuleInit {
 
     const seen = new Set<string>();
     try {
-      const files: string[] = [];
-      for await (const p of walkDir(this.musicPath)) {
-        const ext = p.slice(p.lastIndexOf('.')).toLowerCase();
-        if (AUDIO_EXT.has(ext)) files.push(p);
+      const all = await this.enabledLibraries();
+      const wanted = libraryId ? all.filter((l) => l.id === libraryId) : all;
+      // Un disque débranché ou un chemin faux ne doit pas vider la
+      // bibliothèque : sans lecture possible, le scan n'a rien constaté et
+      // n'a donc pas autorité pour marquer ses pistes disparues.
+      const libraries: Library[] = [];
+      for (const library of wanted) {
+        try {
+          await access(library.path, constants.R_OK);
+          libraries.push(library);
+        } catch {
+          this.logger.warn(
+            `Bibliothèque « ${library.name} » ignorée (dossier illisible) : ${library.path}`,
+          );
+        }
+      }
+      // Un fichier peut appartenir à une seule bibliothèque : les chemins
+      // imbriqués sont refusés à la création, l'ordre suffit donc à trancher.
+      const files: { path: string; library: Library }[] = [];
+      for (const library of libraries) {
+        for await (const p of walkDir(library.path)) {
+          const ext = p.slice(p.lastIndexOf('.')).toLowerCase();
+          if (AUDIO_EXT.has(ext)) files.push({ path: p, library });
+        }
       }
       let i = 0;
-      for (const filePath of files) {
-        await this.indexFile(filePath, seen);
+      for (const file of files) {
+        await this.indexFile(file.path, file.library, seen);
         i++;
         state.scanProgress = files.length
           ? Math.min(99, Math.floor((i / files.length) * 100))
           : 100;
         if (i % 50 === 0) await this.scannerRepo.save(state);
       }
-      await this.markMissingDeleted(seen);
+      await this.markMissingDeleted(seen, libraries, !libraryId);
+      const scannedAt = new Date();
+      for (const library of libraries) {
+        await this.libraryRepo.update(library.id, { lastScanAt: scannedAt });
+      }
       await this.reconcileAlbums();
       // Les pochettes de repli (concert → artiste) ont pu changer.
       this.coverResolver.invalidate();
@@ -227,47 +301,71 @@ export class ScannerService implements OnModuleInit {
     `);
     // Retire les likes pointant un album devenu orphelin, puis purge les albums
     // sans aucune piste vivante (anciens doublons titre×artiste).
+    //
+    // Une piste d'une bibliothèque désactivée est marquée supprimée sans avoir
+    // disparu du disque : elle compte donc comme vivante ici, sinon désactiver
+    // une bibliothèque effacerait ses albums (likes, pochettes, éditions) et
+    // les réactiver ne les rendrait pas.
+    const ALIVE = `(t.deleted_at IS NULL OR EXISTS (
+        SELECT 1 FROM libraries l
+        WHERE l.id = t.library_id AND l.enabled = false
+          AND t.deleted_at = l.hidden_at
+      ))`;
     await this.albumRepo.query(`
       DELETE FROM album_likes al WHERE NOT EXISTS (
-        SELECT 1 FROM tracks t WHERE t.album_id = al.album_id AND t.deleted_at IS NULL
+        SELECT 1 FROM tracks t WHERE t.album_id = al.album_id AND ${ALIVE}
       )
     `);
     await this.albumRepo.query(`
       DELETE FROM albums a WHERE NOT EXISTS (
-        SELECT 1 FROM tracks t WHERE t.album_id = a.id AND t.deleted_at IS NULL
+        SELECT 1 FROM tracks t WHERE t.album_id = a.id AND ${ALIVE}
       )
     `);
   }
 
-  private async markMissingDeleted(seen: Set<string>): Promise<void> {
-    if (seen.size === 0) {
-      await this.trackRepo
-        .createQueryBuilder()
-        .update(Track)
-        .set({ deletedAt: () => 'now()' })
-        .where('deleted_at IS NULL')
-        .execute();
-      return;
-    }
-    const paths = [...seen];
-    await this.trackRepo
-      .createQueryBuilder()
-      .update(Track)
-      .set({ deletedAt: () => 'now()' })
-      .where('deleted_at IS NULL')
-      .andWhere('file_path NOT IN (:...paths)', { paths })
-      .execute();
+  /**
+   * Marque supprimées les pistes absentes du disque. Le scan ne fait autorité
+   * que sur les bibliothèques qu'il vient de parcourir : celles des autres
+   * (désactivées, ou non scannées quand on relance une seule carte) sont
+   * laissées telles quelles. Les pistes orphelines (`library_id IS NULL`,
+   * bibliothèque supprimée) suivent le scan complet.
+   */
+  private async markMissingDeleted(
+    seen: Set<string>,
+    libraries: Library[],
+    full = true,
+  ): Promise<void> {
+    const ids = libraries.map((l) => l.id);
+    if (!full && !ids.length) return;
+    // Comparaison à un tableau (`= ANY`) plutôt qu'un `NOT IN (...)` : un seul
+    // paramètre, quel que soit le nombre de fichiers — Postgres plafonne à
+    // 65 535 paramètres par requête.
+    const scope = full
+      ? 'AND (library_id = ANY($2::uuid[]) OR library_id IS NULL)'
+      : 'AND library_id = ANY($2::uuid[])';
+    await this.trackRepo.query(
+      `UPDATE tracks SET deleted_at = now()
+        WHERE deleted_at IS NULL ${scope} AND NOT (file_path = ANY($1::text[]))`,
+      [[...seen], ids],
+    );
   }
 
-  private async indexFile(absPath: string, seen: Set<string>): Promise<void> {
+  private async indexFile(
+    absPath: string,
+    library: Library,
+    seen: Set<string>,
+  ): Promise<void> {
     seen.add(absPath);
-    const rel = relative(this.musicPath, absPath);
-    const parts = rel.split(sep).filter(Boolean);
+    const rel = relative(library.path, absPath);
+    let parts = rel.split(sep).filter(Boolean);
+    // La section vient du type de la bibliothèque ; une bibliothèque musicale
+    // respecte encore le découpage historique music/ concerts/ audiobooks/.
+    let section: TrackSection = library.type;
     const root = parts[0]?.toLowerCase() ?? '';
-    let section: TrackSection = 'music';
-    if (root === 'concerts') section = 'concert';
-    else if (root === 'audiobooks' || root === 'audiobook')
-      section = 'audiobook';
+    if (library.type === 'music' && parts.length > 1 && LEGACY_ROOTS[root]) {
+      section = LEGACY_ROOTS[root];
+      parts = parts.slice(1);
+    }
 
     const pathLower = absPath.toLowerCase();
     const isCoverPath =
@@ -283,16 +381,18 @@ export class ScannerService implements OnModuleInit {
     }
     const isCover = isCoverPath || meta.isCoverHint;
 
+    // Arborescence attendue dans une bibliothèque musicale : Artiste/Album/piste.
     let artistName = meta.artist;
     let albumTitle = meta.album;
     if (section === 'music' && parts.length >= 3) {
-      artistName = parts[1] ?? artistName;
-      albumTitle = parts[2] ?? albumTitle;
+      artistName = parts[0] ?? artistName;
+      albumTitle = parts[1] ?? albumTitle;
     }
 
-    // Dossier de l'album = répertoire contenant la piste (relatif à /music).
-    // Sert d'identité stable pour regrouper toutes les pistes d'un dossier.
-    const albumFolder = parts.length > 1 ? parts.slice(0, -1).join(sep) : null;
+    // Dossier de l'album = répertoire contenant la piste, en absolu : identité
+    // stable pour regrouper les pistes d'un dossier, sans collision possible
+    // entre deux bibliothèques au même sous-chemin.
+    const albumFolder = parts.length > 1 ? dirname(absPath) : null;
 
     const artists = await this.ensureArtists(artistName);
     const artist = artists[0];
@@ -300,7 +400,7 @@ export class ScannerService implements OnModuleInit {
     let album: Album | null = null;
 
     if (section === 'concert' && parts.length >= 2) {
-      const folderTitle = parts[1];
+      const folderTitle = parts[0];
       concert = await this.ensureConcert(folderTitle, artist);
     } else {
       album = await this.ensureAlbum(albumTitle, artist, isCover, albumFolder);
@@ -329,6 +429,7 @@ export class ScannerService implements OnModuleInit {
     track.bitrate = meta.bitrate;
     track.sampleRate = meta.sampleRate;
     track.section = section;
+    track.libraryId = library.id;
     track.isCover = isCover;
     track.deletedAt = null;
     await this.trackRepo.save(track);
@@ -357,7 +458,7 @@ export class ScannerService implements OnModuleInit {
     }
 
     if (section === 'audiobook' && parts.length >= 2) {
-      const bookFolder = parts[1];
+      const bookFolder = parts[0];
       await this.ensureAudiobookChapter(bookFolder, track, parts);
     }
   }
@@ -485,7 +586,7 @@ export class ScannerService implements OnModuleInit {
         ? 'Ancien Testament'
         : parts.includes('Nouveau Testament')
           ? 'Nouveau Testament'
-          : parts[2] ?? null;
+          : parts[1] ?? null;
     }
     const ch = this.chapterRepo.create({
       audiobookId: book.id,

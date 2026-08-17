@@ -17,6 +17,8 @@ import { PlayEvent } from './entities/play-event.entity';
 import { AlbumPlay } from './entities/album-play.entity';
 import { AudiobookProgress } from './entities/audiobook-progress.entity';
 import { ScannerState } from './entities/scanner-state.entity';
+import { Library } from './entities/library.entity';
+import { AppSetting } from './entities/app-setting.entity';
 import { InitialSchema1738761600000 } from './migrations/1738761600000-InitialSchema';
 import { AlbumArtistLikes1760000000000 } from './migrations/1760000000000-AlbumArtistLikes';
 import { TrackArtists1760000100000 } from './migrations/1760000100000-TrackArtists';
@@ -25,6 +27,7 @@ import { TrackMetadataLocked1760000300000 } from './migrations/1760000300000-Tra
 import { AlbumFolderCompilation1760000400000 } from './migrations/1760000400000-AlbumFolderCompilation';
 import { AlbumPlays1760000500000 } from './migrations/1760000500000-AlbumPlays';
 import { AlbumTypeLock1760000600000 } from './migrations/1760000600000-AlbumTypeLock';
+import { Libraries1760000700000 } from './migrations/1760000700000-Libraries';
 
 config({ path: join(__dirname, '../../.env') });
 
@@ -37,6 +40,7 @@ const migrations = [
   AlbumFolderCompilation1760000400000,
   AlbumPlays1760000500000,
   AlbumTypeLock1760000600000,
+  Libraries1760000700000,
 ];
 
 export default new DataSource({
@@ -59,6 +63,8 @@ export default new DataSource({
     AlbumPlay,
     AudiobookProgress,
     ScannerState,
+    Library,
+    AppSetting,
   ],
   migrations,
   synchronize: false,
