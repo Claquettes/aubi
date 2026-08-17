@@ -184,3 +184,45 @@ côtés) :
 
 L'interface est alors sur http://localhost:5173 et l'API sur
 http://localhost:3000/api/v1.
+
+### Tester une installation neuve
+
+Pour vérifier ce que vit un nouvel utilisateur — images de production, migrations
+au démarrage, assistant de première configuration — sans toucher à votre pile de
+développement ni à vos données.
+
+La pile de dev réserve les noms `aubi_backend`, `aubi_db` et les volumes du même
+nom. On les neutralise pour que le test vive à côté, dans son propre projet :
+
+```bash
+sed -e '/container_name:/d' -e '/^    name: aubi_/d' \
+    docker-compose.standalone.yml > /tmp/aubi-test.yml
+```
+
+Préparez un petit dossier de test (quelques fichiers suffisent : un scan complet
+n'apporte rien de plus ici) :
+
+```bash
+mkdir -p /tmp/aubi-media/Un\ Artiste/Un\ Album
+cp ~/Musique/*.mp3 /tmp/aubi-media/Un\ Artiste/Un\ Album/   # 5 ou 6 fichiers
+```
+
+Puis lancez la pile de test, sur son propre port et ses propres volumes :
+
+```bash
+AUBI_MEDIA_ROOT=/tmp/aubi-media AUBI_DB_PASSWORD=test AUBI_PORT=8090 \
+  docker compose -p aubi-test -f /tmp/aubi-test.yml --project-directory . up -d --build
+```
+
+Ouvrez http://localhost:8090 : l'assistant doit apparaître comme au premier
+jour. Déroulez-le, puis vérifiez que la bibliothèque s'affiche, qu'une pochette
+se charge et qu'un titre se lit.
+
+Tout effacer à la fin (le `-v` supprime les volumes du test, pas ceux de votre
+pile de dev) :
+
+```bash
+AUBI_MEDIA_ROOT=/tmp/aubi-media AUBI_DB_PASSWORD=test \
+  docker compose -p aubi-test -f /tmp/aubi-test.yml --project-directory . down -v
+rm -rf /tmp/aubi-media /tmp/aubi-test.yml
+```
