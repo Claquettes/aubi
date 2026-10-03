@@ -20,10 +20,26 @@ export interface AudioLevels {
   level: number;
 }
 
+/**
+ * iOS (où tous les navigateurs sont WebKit) suspend l'AudioContext dès que la
+ * page passe en arrière-plan ou que l'écran se verrouille, et refuse de le
+ * relancer hors geste utilisateur. Un <audio> branché sur Web Audio ne sort plus
+ * le son que par ce contexte : la musique se couperait. Pas d'analyse sur iOS,
+ * le fond reste animé en CSS seul.
+ */
+function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    // iPadOS se présente comme un Mac : on le reconnaît à l'écran tactile.
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+}
+
 let ctx: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let spectrum: Uint8Array<ArrayBuffer> | null = null;
-let unavailable = false;
+let unavailable = isIOS();
 
 /** Un élément ne peut être "tapé" qu'une seule fois (Howler recycle ses nodes). */
 const tapped = new WeakMap<HTMLMediaElement, MediaElementAudioSourceNode>();
